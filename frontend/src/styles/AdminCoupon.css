@@ -1,0 +1,51 @@
+/* ===== Coupons Page Header ===== */
+
+.admin-page {
+    width: 100%;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.page-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.table-card {
+    width: 100%;
+    background: #fff;
+    border-radius: 20px;
+    overflow-x: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+}
+
+.admin-table {
+    width: 100%;
+    min-width: 1200px;
+}
+
+.first-order-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.first-order-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #c9a66b;
+}
+
+.first-order-row label {
+    margin: 0;
+    cursor: pointer;
+    font-size: 14px;
+}
