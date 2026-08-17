@@ -6,7 +6,7 @@ import {
 } from "../../api/endpoints";
 import { useToast } from "../../context/ToastContext";
 import { Icon } from "../../components/Icons";
-import "../../styles/Admin.css";
+import "../../styles/admin.css";
 
 const EMPTY = {
     offerName: "",
