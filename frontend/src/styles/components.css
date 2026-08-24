@@ -2647,7 +2647,13 @@
 
 /* Mobile */
 @media (max-width: 940px) {
+  .header .container {
+    height: 95px;
+  }
+
   .brand img {
-    height: 75px;
+    height: 95px;
+    /* or 100px */
+    width: auto;
   }
 }

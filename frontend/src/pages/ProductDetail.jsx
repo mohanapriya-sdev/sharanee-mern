@@ -329,32 +329,29 @@ export default function ProductDetail() {
           {/* Gallery: main image + up to 5 thumbnails below */}
           <div className="pdp-gallery">
 
+            <div className="pdp-main">
+              <img
+                src={imgs[active]}
+                alt={product.productName}
+              />
+            </div>
+
             <div className="pdp-thumbs">
-              {thumbs.map((im, i) => (
+              {thumbs.map((img, index) => (
                 <button
-                  key={i}
-                  className={`pdp-thumb ${i === active ? "active" : ""}`}
-                  onClick={() => setActive(i)}
+                  key={index}
+                  className={`pdp-thumb ${active === index ? "active" : ""}`}
+                  onClick={() => setActive(index)}
                 >
-                  <img src={im} alt={`View ${i + 1}`} />
+                  <img
+                    src={img}
+                    alt={`${product.productName}-${index}`}
+                  />
                 </button>
               ))}
             </div>
 
-            <div className="pdp-main">
-              {hasSale && (
-                <span className="badge badge-sale">
-                  {product.discount.discountType === "Percentage"
-                    ? `${product.discount.discountValue}% OFF`
-                    : `₹${product.discount.discountValue} OFF`}
-                </span>
-              )}
-
-              <img src={imgs[active]} alt={product.productName} />
-            </div>
-
           </div>
-
           {/* Info */}
           <div className="pdp-info">
             <span className="pdp-cat">{product.category?.categoryName || product.occasion}</span>
