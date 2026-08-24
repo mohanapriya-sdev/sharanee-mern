@@ -404,7 +404,7 @@ export default function Header() {
                             >
                                 Shop
                             </Link>
-
+                            {/*
                             <Link
                                 to="/blog"
                                 onClick={() => setDrawer(false)}
@@ -418,6 +418,8 @@ export default function Header() {
                             >
                                 About
                             </Link>
+
+                            */}
 
                             <Link
                                 to="/contact"

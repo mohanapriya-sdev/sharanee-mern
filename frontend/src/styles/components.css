@@ -1667,17 +1667,6 @@
 }
 
 
-/* Gold heading row */
-
-.gold-title-line {
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 12px;
-}
 
 
 /* Horizontal gold lines */
@@ -1694,14 +1683,27 @@
 
 /* Small decorative symbol */
 
+/* Gold heading row */
+.gold-title-line {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  /* Keeps everything vertically centered */
+  justify-content: center;
+  gap: 14px;
+  margin: 12px 0 30px;
+}
+
+/* Decorative diamond */
 .gold-decor {
-  color: #cfa45f;
-  font-size: 14px;
-  line-height: 1;
-  display: inline-flex;
+  color: var(--gold);
+  font-size: 15px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  line-height: 1;
+  transform: translateY(-3px);
+  /* Move diamond UP */
 }
 
 /* Saree Inskirts / Saree Pins */
