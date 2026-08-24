@@ -103,6 +103,29 @@ const prepareProductBody = (requestBody) => {
 
   return body;
 };
+const prepareColorVariants = (colorVariants) => {
+  if (!colorVariants) return [];
+
+  let variants = colorVariants;
+
+  if (typeof variants === "string") {
+    variants = JSON.parse(variants);
+  }
+
+  if (!Array.isArray(variants)) {
+    return [];
+  }
+
+  return variants.map((variant) => ({
+    colorFamily: variant.colorFamily || "",
+    colorName: variant.colorName || "",
+    colorCode: variant.colorCode || "#000000",
+    sizes: Array.isArray(variant.sizes) ? variant.sizes : [],
+    stock: Number(variant.stock || 0),
+    images: Array.isArray(variant.images) ? variant.images : [],
+  }));
+};
+
 
 const filesToPaths = (files = []) =>
   files.map((file) => file.path);
@@ -128,6 +151,7 @@ const deleteImageFiles = (images = []) => {
 const listProducts = asyncHandler(async (req, res) => {
   const {
     search,
+    productType,
     category,
     fabric,
     color,
@@ -138,9 +162,20 @@ const listProducts = asyncHandler(async (req, res) => {
     minPrice,
     maxPrice,
     sort,
+    parentProduct,
   } = req.query;
 
   const filter = {};
+
+  if (req.query.mainOnly === "true") {
+    filter.parentProduct = null;
+  }
+  if (parentProduct) {
+    filter.parentProduct = parentProduct;
+  }
+  if (productType) {
+    filter.productType = productType;
+  }
   if (search) {
     const searchTerm = search.trim();
 
@@ -191,7 +226,31 @@ const listProducts = asyncHandler(async (req, res) => {
   }
 
   if (color) {
-    filter["colorVariants.colorName"] = color;
+    const escapedColor = color.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const linkedProducts = await Product.find({
+      parentProduct: { $ne: null },
+      "colorVariants.colorName": {
+        $regex: `^${escapedColor}$`,
+        $options: "i",
+      },
+    }).select("parentProduct");
+
+    const linkedParentIds = linkedProducts
+      .map((product) => product.parentProduct)
+      .filter(Boolean);
+
+    filter.$or = [
+      {
+        "colorVariants.colorName": {
+          $regex: `^${escapedColor}$`,
+          $options: "i",
+        },
+      },
+      {
+        _id: { $in: linkedParentIds },
+      },
+    ];
   }
   if (occasion) {
     filter.occasion = occasion;
@@ -239,7 +298,45 @@ const listProducts = asyncHandler(async (req, res) => {
   const products = await Product.find(filter)
     .populate("category", "categoryName")
     .sort(SORTS[sort] || { createdAt: -1 });
+  // Attach matching child color variants to the parent product
+  // for color-filtered Shop results.
+  if (color && products.length > 0) {
+    const parentIds = products.map((product) => product._id);
 
+    const escapedColor = color
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const childProducts = await Product.find({
+      parentProduct: { $in: parentIds },
+      "colorVariants.colorName": {
+        $regex: `^${escapedColor}$`,
+        $options: "i",
+      },
+    }).select("parentProduct colorVariants");
+
+    products.forEach((product) => {
+      const matchingChildren = childProducts.filter(
+        (child) =>
+          child.parentProduct &&
+          child.parentProduct.toString() === product._id.toString()
+      );
+
+      const childVariants = matchingChildren.flatMap((child) =>
+        (child.colorVariants || []).filter(
+          (variant) =>
+            variant.colorName?.toLowerCase() === color.trim().toLowerCase()
+        )
+      );
+
+      if (childVariants.length > 0) {
+        product.colorVariants = [
+          ...(product.colorVariants || []),
+          ...childVariants,
+        ];
+      }
+    });
+  }
   console.log(
     "SEARCH RESULTS:",
     products.map((p) => ({
@@ -430,10 +527,21 @@ const createProduct = asyncHandler(async (req, res) => {
   console.log("FILES:", req.files);
 
   const body = prepareProductBody(req.body);
+  if (!body.parentProduct || body.parentProduct === "") {
+    delete body.parentProduct;
+  }
 
   if (body.productType === "Inskirts" && body.colorVariants) {
-    body.colorVariants = JSON.parse(body.colorVariants);
+    body.colorVariants = prepareColorVariants(body.colorVariants);
+
+    // Keep product-level stock in sync with all color stocks
+    body.stock = body.colorVariants.reduce(
+      (total, variant) => total + Number(variant.stock || 0),
+      0
+    );
+
     console.log("CREATE COLOR VARIANTS:", body.colorVariants);
+    console.log("TOTAL INSKIRT STOCK:", body.stock);
   }
   if (body.productType === "Pins") {
     const pinImages = (req.files || []).filter(
@@ -451,7 +559,74 @@ const createProduct = asyncHandler(async (req, res) => {
       variant.images = files.map((file) => file.path);
     });
   }
-  const product = await Product.create(body);
+
+
+  let product;
+
+  if (body.productType === "Inskirts") {
+    const productNameRegex = new RegExp(
+      `^${body.productName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "i"
+    );
+
+    // Get ALL existing Inskirts products with the same product name
+    const existingProducts = await Product.find({
+      productType: "Inskirts",
+      productName: productNameRegex,
+    }).sort({ createdAt: 1 });
+
+    if (existingProducts.length > 0) {
+      // Keep the first/oldest product as the main product
+      const mainProduct = existingProducts[0];
+
+      // Collect all old color variants
+      const oldVariants = existingProducts.flatMap(
+        (p) => p.colorVariants || []
+      );
+
+      // Add the newly submitted color variants
+      const newVariants = body.colorVariants || [];
+
+      mainProduct.colorVariants = [
+        ...oldVariants,
+        ...newVariants,
+      ];
+
+      // Recalculate total stock
+      mainProduct.stock = mainProduct.colorVariants.reduce(
+        (total, variant) =>
+          total + Number(variant.stock || 0),
+        0
+      );
+
+      // Update common details
+      mainProduct.description = body.description;
+      mainProduct.price = body.price;
+      mainProduct.discountPrice = body.discountPrice;
+      mainProduct.fabric = body.fabric;
+      mainProduct.occasion = body.occasion;
+      mainProduct.pattern = body.pattern;
+
+      product = await mainProduct.save();
+
+      // Delete duplicate Inskirts product documents
+      const duplicateIds = existingProducts
+        .slice(1)
+        .map((p) => p._id);
+
+      if (duplicateIds.length > 0) {
+        await Product.deleteMany({
+          _id: { $in: duplicateIds },
+        });
+      }
+    } else {
+      // First Inskirts product
+      product = await Product.create(body);
+    }
+  } else {
+    // Pins remain separate products
+    product = await Product.create(body);
+  }
 
   const populatedProduct = await Product.findById(product._id).populate(
     "category",
@@ -482,8 +657,16 @@ const updateProduct = asyncHandler(async (req, res) => {
   console.log("BODY:", req.body);
   console.log("FILES:", req.files);
   if (body.productType === "Inskirts" && body.colorVariants) {
-    body.colorVariants = JSON.parse(body.colorVariants);
+    body.colorVariants = prepareColorVariants(body.colorVariants);
+
+    // Recalculate total stock from color variants
+    body.stock = body.colorVariants.reduce(
+      (total, variant) => total + Number(variant.stock || 0),
+      0
+    );
+
     console.log("UPDATE COLOR VARIANTS:", body.colorVariants);
+    console.log("TOTAL INSKIRT STOCK:", body.stock);
   }
 
   if (body.productType === "Inskirts" && body.colorVariants) {
@@ -530,20 +713,40 @@ const updateProduct = asyncHandler(async (req, res) => {
   Object.assign(product, body);
   await product.save();
 
-  // Low Stock Notification
-  if (product.stock <= 5 && product.stock > 0) {
-    await Notification.create({
-      title: "⚠ Low Stock",
-      message: `${product.productName} has only ${product.stock} items left.`,
-    });
-  }
+  // Stock Notifications
+  if (product.productType === "Inskirts") {
+    for (const variant of product.colorVariants || []) {
+      const variantStock = Number(variant.stock || 0);
 
-  // Out of Stock Notification
-  if (product.stock === 0) {
-    await Notification.create({
-      title: "❌ Out of Stock",
-      message: `${product.productName} is now out of stock.`,
-    });
+      if (variantStock > 0 && variantStock <= 5) {
+        await Notification.create({
+          title: "⚠ Low Stock",
+          message: `${product.productName} - ${variant.colorName} has only ${variantStock} items left.`,
+        });
+      }
+
+      if (variantStock === 0) {
+        await Notification.create({
+          title: "❌ Out of Stock",
+          message: `${product.productName} - ${variant.colorName} is out of stock.`,
+        });
+      }
+    }
+  } else {
+    // Pins use common product stock
+    if (product.stock > 0 && product.stock <= 5) {
+      await Notification.create({
+        title: "⚠ Low Stock",
+        message: `${product.productName} has only ${product.stock} items left.`,
+      });
+    }
+
+    if (product.stock === 0) {
+      await Notification.create({
+        title: "❌ Out of Stock",
+        message: `${product.productName} is now out of stock.`,
+      });
+    }
   }
 
   if (body.productType === "Pins" && removedImages.length) {

@@ -14,13 +14,74 @@ const addToCart = asyncHandler(async (req, res) => {
   } = req.body;
 
   if (!user || !product) {
-    return res
-      .status(400)
-      .json({
-        message: "user and product are required",
-      });
+    return res.status(400).json({
+      message: "user and product are required",
+    });
   }
 
+  const requestedQty = Number(quantity);
+
+  if (!Number.isInteger(requestedQty) || requestedQty < 1) {
+    return res.status(400).json({
+      message: "quantity must be at least 1",
+    });
+  }
+
+  // Get product
+  const productDoc = await Product.findById(product);
+
+  if (!productDoc) {
+    return res.status(404).json({
+      message: "Product not found",
+    });
+  }
+
+  let availableStock = 0;
+
+  // =========================
+  // INSKIRTS
+  // =========================
+  if (productDoc.productType === "Inskirts") {
+    if (!selectedColor) {
+      return res.status(400).json({
+        message: "Please select a color.",
+      });
+    }
+
+    const variant = productDoc.colorVariants.find(
+      (v) =>
+        v.colorName?.toLowerCase() ===
+        selectedColor.toLowerCase()
+    );
+
+    if (!variant) {
+      return res.status(400).json({
+        message: `Color ${selectedColor} not found.`,
+      });
+    }
+
+    availableStock = Number(variant.stock || 0);
+
+    if (
+      variant.sizes?.length > 0 &&
+      !selectedSize
+    ) {
+      return res.status(400).json({
+        message: "Please select a size.",
+      });
+    }
+  }
+
+  // =========================
+  // PINS
+  // =========================
+  else if (productDoc.productType === "Pins") {
+    availableStock = Number(productDoc.stock || 0);
+  }
+
+  // =========================
+  // EXISTING CART ITEM
+  // =========================
   let item = await Cart.findOne({
     user,
     product,
@@ -28,19 +89,32 @@ const addToCart = asyncHandler(async (req, res) => {
     selectedSize,
   });
 
+  const newQuantity =
+    (item?.quantity || 0) + requestedQty;
+
+  if (newQuantity > availableStock) {
+    return res.status(400).json({
+      message: `Only ${availableStock} item(s) available for ${selectedColor || "this product"}.`,
+    });
+  }
+
+  if (availableStock <= 0) {
+    return res.status(400).json({
+      message: `${selectedColor || "This product"} is out of stock.`,
+    });
+  }
+
   if (item) {
-    item.quantity += Number(quantity) || 1;
+    item.quantity = newQuantity;
     await item.save();
   } else {
-
     item = await Cart.create({
       user,
       product,
-      quantity,
+      quantity: requestedQty,
       selectedColor,
       selectedSize,
     });
-
   }
 
   await item.populate("product");
@@ -149,11 +223,52 @@ const getCart = asyncHandler(async (req, res) => {
 // @route  PUT /api/cart/:id   body: { quantity }
 const updateQty = asyncHandler(async (req, res) => {
   const { quantity } = req.body;
+
   if (!quantity || quantity < 1) {
-    return res.status(400).json({ message: "quantity must be at least 1" });
+    return res.status(400).json({
+      message: "quantity must be at least 1",
+    });
   }
-  const item = await Cart.findByIdAndUpdate(req.params.id, { quantity }, { new: true }).populate("product");
-  if (!item) return res.status(404).json({ message: "Cart item not found" });
+
+  const item = await Cart.findById(req.params.id).populate("product");
+
+  if (!item) {
+    return res.status(404).json({
+      message: "Cart item not found",
+    });
+  }
+
+  const product = item.product;
+
+  let availableStock = 0;
+
+  if (product.productType === "Inskirts") {
+    const variant = product.colorVariants.find(
+      (v) =>
+        v.colorName?.toLowerCase() ===
+        item.selectedColor?.toLowerCase()
+    );
+
+    if (!variant) {
+      return res.status(400).json({
+        message: "Selected color is no longer available.",
+      });
+    }
+
+    availableStock = Number(variant.stock || 0);
+  } else {
+    availableStock = Number(product.stock || 0);
+  }
+
+  if (Number(quantity) > availableStock) {
+    return res.status(400).json({
+      message: `Only ${availableStock} item(s) available.`,
+    });
+  }
+
+  item.quantity = Number(quantity);
+  await item.save();
+
   res.json({ item });
 });
 

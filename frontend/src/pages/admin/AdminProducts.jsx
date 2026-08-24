@@ -36,7 +36,6 @@ const SIZE_OPTIONS = [
   "XL",
   "XXL",
   "3XL",
-
 ];
 
 const PATTERN_OPTIONS = [
@@ -52,6 +51,7 @@ const PATTERN_OPTIONS = [
 
 const EMPTY = {
   productType: "Inskirts",
+  parentProduct: "",
   productName: "",
   description: "",
   category: "",
@@ -71,6 +71,7 @@ const EMPTY = {
       colorCode: "",
       images: [],
       sizes: [],
+      stock: "",
     },
   ],
 };
@@ -85,6 +86,7 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const isPin = form.productType === "Pins";
+  const [openColorVariant, setOpenColorVariant] = useState(0);
 
   // Existing image paths kept for the product being edited
   const [existingImages, setExistingImages] = useState([]);
@@ -151,9 +153,12 @@ export default function AdminProducts() {
           colorCode: "",
           images: [],
           sizes: [],
+          stock: "",
         },
       ],
     }));
+
+    setOpenColorVariant(form.colorVariants.length);
   };
 
   const removeColorVariant = (index) => {
@@ -204,17 +209,21 @@ export default function AdminProducts() {
       };
     });
   };
+
   const openNew = () => {
     setForm(EMPTY);
     setEditing(null);
     setExistingImages([]);
     setNewFiles([]);
+    setOpenColorVariant(0);
     setOpen(true);
   };
+
 
   const openEdit = (product) => {
     setForm({
       productType: product.productType || "Inskirts",
+      parentProduct: product.parentProduct?._id || product.parentProduct || "",
       productName: product.productName || "",
       description: product.description || "",
       category: product.category?._id || product.category || "",
@@ -240,6 +249,7 @@ export default function AdminProducts() {
             colorCode: variant.colorCode || "#000000",
             images: variant.images || [],
             sizes: Array.isArray(variant.sizes) ? variant.sizes : [],
+            stock: variant.stock ?? 0,
           }))
           : [
             {
@@ -249,13 +259,17 @@ export default function AdminProducts() {
               colorCode: "",
               images: [],
               sizes: [],
+              stock: "",
             }
           ],
     });
 
     setEditing(product._id);
-    setExistingImages(Array.isArray(product.images) ? product.images : []);
+    setExistingImages(
+      Array.isArray(product.images) ? product.images : []
+    );
     setNewFiles([]);
+    setOpenColorVariant(0);
     setOpen(true);
   };
   const addImages = (event) => {
@@ -300,15 +314,23 @@ export default function AdminProducts() {
         toast.error("Please upload at least one image for a color variant.");
         return;
       }
-    }
 
-    if (!isPin) {
-      if (!Array.isArray(form.size) || form.size.length === 0) {
-        toast.error("Please select at least one size.");
+      const missingSize = form.colorVariants.some(
+        (variant) =>
+          !Array.isArray(variant.sizes) ||
+          variant.sizes.length === 0
+      );
+
+      if (missingSize) {
+        toast.error("Please select at least one size for every color.");
+        return;
+      }
+    } else {
+      if (newFiles.length === 0 && existingImages.length === 0) {
+        toast.error("Please upload at least one product image.");
         return;
       }
     }
-
     setBusy(true);
 
     try {
@@ -337,9 +359,14 @@ export default function AdminProducts() {
                 colorName: v.colorName,
                 colorCode: v.colorCode,
                 sizes: v.sizes || [],
+                stock: Number(v.stock || 0),
               }))
             )
           );
+        } else if (key === "parentProduct") {
+          if (value && value.trim() !== "") {
+            formData.append("parentProduct", value);
+          }
         } else {
           formData.append(key, value);
         }
@@ -414,11 +441,10 @@ export default function AdminProducts() {
     );
   }
 
-  // Category
+  // Product Type
   if (categoryFilter) {
     filteredProducts = filteredProducts.filter(
-      (product) =>
-        product.category?.categoryName === categoryFilter
+      (product) => product.productType === categoryFilter
     );
   }
 
@@ -488,16 +514,9 @@ export default function AdminProducts() {
               setCurrentPage(1);
             }}
           >
-            <option value="">Category Filter</option>
-
-            {cats.map((cat) => (
-              <option
-                key={cat._id}
-                value={cat.categoryName}
-              >
-                {cat.categoryName}
-              </option>
-            ))}
+            <option value="">Product Type</option>
+            <option value="Inskirts">Inskirts</option>
+            <option value="Pins">Pins</option>
           </select>
 
           <select
@@ -513,7 +532,6 @@ export default function AdminProducts() {
             <option value="Low Stock">Low Stock</option>
             <option value="Out of Stock">Out of Stock</option>
           </select>
-
 
           <select
             className="toolbar-select"
@@ -675,7 +693,19 @@ export default function AdminProducts() {
           }
         >
           <div className="modal">
-            <h2>{editing ? "Edit" : "Add"} Product</h2>
+
+            <div className="admin-product-modal-header">
+              <h2>{editing ? "Edit" : "Add"} Product</h2>
+
+              <button
+                type="button"
+                className="admin-product-close"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
 
             <form onSubmit={save}>
               <div className="field">
@@ -705,6 +735,35 @@ export default function AdminProducts() {
                 <label>Product Name</label>
                 <input required {...f("productName")} />
               </div>
+              {!isPin && (
+                <div className="field">
+                  <label>Main Product</label>
+
+                  <select
+                    value={form.parentProduct}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        parentProduct: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Main Product / No Parent</option>
+
+                    {products
+                      .filter(
+                        (product) =>
+                          product.productType === "Inskirts" &&
+                          product._id !== editing
+                      )
+                      .map((product) => (
+                        <option key={product._id} value={product._id}>
+                          {product.productName}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
 
               <div className="field">
                 <label>Description</label>
@@ -713,7 +772,7 @@ export default function AdminProducts() {
 
               <div className="form-2col">
                 <div className="field">
-                  <label>Category</label>
+                  <label>Colors</label>
 
                   <select required {...f("category")}>
                     <option value="">Select category</option>
@@ -770,16 +829,19 @@ export default function AdminProducts() {
               </div>
 
               <div className="form-2col">
-                <div className="field">
-                  <label>Stock</label>
 
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    {...f("stock")}
-                  />
-                </div>
+                {isPin && (
+                  <div className="field">
+                    <label>Stock</label>
+
+                    <input
+                      type="number"
+                      min="0"
+                      required
+                      {...f("stock")}
+                    />
+                  </div>
+                )}
 
                 {!isPin && (
                   <div className="field">
@@ -795,7 +857,25 @@ export default function AdminProducts() {
                       ))}
                     </select>
                   </div>
-                )}              </div>
+                )}
+
+                {!isPin && (
+                  <div className="field">
+                    <label>Pattern</label>
+
+                    <select required {...f("pattern")}>
+                      <option value="">Select pattern</option>
+
+                      {PATTERN_OPTIONS.map((pattern) => (
+                        <option key={pattern} value={pattern}>
+                          {pattern}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+              </div>
               {isPin && (
                 <div className="field">
                   <label>Material</label>
@@ -878,219 +958,7 @@ export default function AdminProducts() {
                   )}
                 </div>
               )}
-
-              {!isPin && (
-                <>
-                  <h3 className="section-title">Color Variants</h3>
-
-                  <div className="color-variants-wrapper">
-
-                    {form.colorVariants.map((variant, index) => (
-
-                      <div className="color-card" key={index}>
-                        <h4 className="color-card-title">
-                          Color Variant {index + 1}
-                        </h4>
-
-                        <div className="field">
-                          <label>Color Family</label>
-
-                          <select
-                            value={variant.colorFamily}
-                            onChange={(e) => {
-                              updateColorVariant(index, "colorFamily", e.target.value);
-                              updateColorVariant(index, "colorName", "");
-                              updateColorVariant(index, "colorCode", "");
-                            }}
-                          >
-                            <option value="">Select Family</option>
-
-                            {[...new Set(COLOR_OPTIONS.map(c => c.family))].map((family) => (
-                              <option key={family} value={family}>
-                                {family}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="field">
-                          <label>Base Color</label>
-
-                          <select
-                            value={variant.colorName}
-                            onChange={(e) => {
-                              const selected = COLOR_OPTIONS.find(
-                                (c) => c.name === e.target.value
-                              );
-
-                              updateColorVariant(index, "colorName", selected.name);
-                              updateColorVariant(index, "colorCode", selected.code);
-                            }}
-                          >
-                            <option value="">Select Base Color</option>
-
-                            {COLOR_OPTIONS
-                              .filter((c) => c.family === variant.colorFamily)
-                              .map((color) => (
-                                <option key={color.name} value={color.name}>
-                                  {color.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-
-
-                        <div className="field">
-                          <label>
-                            Available Sizes for {variant.colorName || `Color ${index + 1}`}
-                          </label>
-
-                          <div className="size-check-grid">
-                            {SIZE_OPTIONS.map((size) => (
-                              <label
-                                className="size-check"
-                                key={`${index}-${size}`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={(variant.sizes || []).includes(size)}
-                                  onChange={() => toggleVariantSize(index, size)}
-                                />
-                                {size}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="field">
-                          <label>Upload Images (Maximum 5)</label>
-
-                          <label className="upload-box">
-
-                            <Icon.Plus size={28} />
-
-                            <span>Click to Upload Images</span>
-
-                            <small>Maximum 5 images</small>
-
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              hidden
-                              onChange={(e) => {
-                                const files = Array.from(e.target.files || []);
-
-                                const updated = [...form.colorVariants];
-
-                                const currentImages = updated[index].images || [];
-
-                                const mergedImages = [...currentImages, ...files];
-
-                                if (mergedImages.length > 5) {
-                                  toast.error("You can upload up to 5 images for this color.");
-                                  e.target.value = "";
-                                  return;
-                                }
-
-                                updated[index] = {
-                                  ...updated[index],
-                                  images: mergedImages,
-                                };
-
-                                setForm((prev) => ({
-                                  ...prev,
-                                  colorVariants: updated,
-                                }));
-
-                                e.target.value = "";
-
-                              }}
-                            />
-
-                          </label>
-                        </div>
-
-                        {
-                          variant.images?.length > 0 && (
-                            <div className="image-manager">
-                              {variant.images.map((img, imageIndex) => {
-                                const isFile = img instanceof File;
-
-                                return (
-                                  <div
-                                    className="image-thumb"
-                                    key={`${index}-${imageIndex}`}
-                                  >
-                                    <img
-                                      src={
-                                        isFile
-                                          ? URL.createObjectURL(img)
-                                          : imageUrl(img)
-                                      }
-                                      alt={`${variant.colorName} ${imageIndex + 1}`}
-                                    />
-
-                                    <button
-                                      type="button"
-                                      title="Remove image"
-                                      aria-label="Remove color image"
-                                      onClick={() => {
-                                        const updated = [...form.colorVariants];
-
-                                        updated[index] = {
-                                          ...updated[index],
-                                          images: updated[index].images.filter(
-                                            (_, i) => i !== imageIndex
-                                          ),
-                                        };
-
-                                        setForm((prev) => ({
-                                          ...prev,
-                                          colorVariants: updated,
-                                        }));
-                                      }}
-                                    >
-                                      <Icon.Close size={12} />
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )
-                        }
-
-                        {/* <button
-                      type="button"
-                      className="btn btn-danger"
-                      onClick={() => removeColorVariant(index)}
-                    >
-                      Remove Color
-                    </button> */}
-                        <button
-                          type="button"
-                          className="remove-color-btn"
-                          onClick={() => removeColorVariant(index)}
-                        >
-                          <Icon.Trash size={16} />
-                          Remove Color
-                        </button>
-
-                      </div>
-
-                    ))}
-
-                    <button
-                      type="button"
-                      className="btn btn-outline add-color-btn"
-                      onClick={addColorVariant}
-                    >
-                      + Add Color
-                    </button>
-
-
-                  </div>
-                </>
-              )}
+              {/*
               {!isPin && (
                 <div className="form-2col">
 
@@ -1109,6 +977,334 @@ export default function AdminProducts() {
                   </div>
 
                 </div>
+              )}
+*/}
+              {!isPin && (
+                <>
+                  <h3 className="section-title">Color Variants</h3>
+
+                  <div className="color-variants-wrapper">
+
+                    {form.colorVariants.map((variant, index) => {
+                      const isVariantOpen = openColorVariant === index;
+
+                      return (
+                        <div className="color-card" key={index}>
+
+                          {/* COLLAPSED / EXPANDED HEADER */}
+                          <button
+                            type="button"
+                            className="color-card-header"
+                            onClick={() =>
+                              setOpenColorVariant(
+                                isVariantOpen ? -1 : index
+                              )
+                            }
+                          >
+                            <span>
+                              Color Variant {index + 1}
+                              {variant.colorName
+                                ? ` — ${variant.colorName}`
+                                : ""}
+                            </span>
+
+                            <span className="color-card-arrow">
+                              {isVariantOpen ? "−" : "+"}
+                            </span>
+                          </button>
+
+                          {/* ONLY OPEN VARIANT SHOWS FULL CONTENT */}
+                          {isVariantOpen && (
+                            <div className="color-card-content">
+
+                              {/* YOUR CURRENT COLOR FAMILY FIELD */}
+                              <div className="field">
+                                <label>Color Family</label>
+
+                                <select
+                                  value={variant.colorFamily}
+                                  onChange={(e) => {
+                                    updateColorVariant(
+                                      index,
+                                      "colorFamily",
+                                      e.target.value
+                                    );
+                                    updateColorVariant(
+                                      index,
+                                      "colorName",
+                                      ""
+                                    );
+                                    updateColorVariant(
+                                      index,
+                                      "colorCode",
+                                      ""
+                                    );
+                                  }}
+                                >
+                                  <option value="">
+                                    Select Family
+                                  </option>
+
+                                  {[...new Set(COLOR_OPTIONS.map((c) => c.family))]
+                                    .sort((a, b) => a.localeCompare(b))
+                                    .map((family) => (
+                                      <option key={family} value={family}>
+                                        {family}
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+
+                              {/* BASE COLOR */}
+                              <div className="field">
+                                <label>Base Color</label>
+
+                                <select
+                                  value={variant.colorName}
+                                  onChange={(e) => {
+                                    const selected = COLOR_OPTIONS.find(
+                                      (c) => c.name === e.target.value
+                                    );
+
+                                    if (!selected) return;
+
+                                    updateColorVariant(
+                                      index,
+                                      "colorName",
+                                      selected.name
+                                    );
+
+                                    updateColorVariant(
+                                      index,
+                                      "colorCode",
+                                      selected.code
+                                    );
+                                  }}
+                                >
+                                  <option value="">
+                                    Select Base Color
+                                  </option>
+
+                                  {COLOR_OPTIONS
+                                    .filter((c) => c.family === variant.colorFamily)
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((color) => (
+                                      <option
+                                        key={color.name}
+                                        value={color.name}
+                                      >
+                                        {color.name}
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+
+                              {/* SIZES */}
+                              <div className="field">
+                                <label>
+                                  Available Sizes for{" "}
+                                  {variant.colorName ||
+                                    `Color ${index + 1}`}
+                                </label>
+
+                                <div className="size-check-grid">
+                                  {SIZE_OPTIONS.map((size) => (
+                                    <label
+                                      className="size-check"
+                                      key={`${index}-${size}`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={
+                                          (variant.sizes || []).includes(size)
+                                        }
+                                        onChange={() =>
+                                          toggleVariantSize(index, size)
+                                        }
+                                      />
+                                      {size}
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* STOCK */}
+                              <div className="field">
+                                <label>
+                                  Stock for{" "}
+                                  {variant.colorName ||
+                                    `Color ${index + 1}`}
+                                </label>
+
+                                <input
+                                  type="number"
+                                  min="0"
+                                  required
+                                  value={variant.stock ?? ""}
+                                  onChange={(e) =>
+                                    updateColorVariant(
+                                      index,
+                                      "stock",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              {/* IMAGE UPLOAD */}
+                              <div className="field">
+                                <label>
+                                  Upload Images (Maximum 5)
+                                </label>
+
+                                <label className="upload-box">
+                                  <Icon.Plus size={28} />
+
+                                  <span>
+                                    Click to Upload Images
+                                  </span>
+
+                                  <small>
+                                    Maximum 5 images
+                                  </small>
+
+                                  <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    hidden
+                                    onChange={(e) => {
+                                      const files = Array.from(
+                                        e.target.files || []
+                                      );
+
+                                      const updated = [
+                                        ...form.colorVariants,
+                                      ];
+
+                                      const currentImages =
+                                        updated[index].images || [];
+
+                                      const mergedImages = [
+                                        ...currentImages,
+                                        ...files,
+                                      ];
+
+                                      if (mergedImages.length > 5) {
+                                        toast.error(
+                                          "You can upload up to 5 images for this color."
+                                        );
+                                        e.target.value = "";
+                                        return;
+                                      }
+
+                                      updated[index] = {
+                                        ...updated[index],
+                                        images: mergedImages,
+                                      };
+
+                                      setForm((prev) => ({
+                                        ...prev,
+                                        colorVariants: updated,
+                                      }));
+
+                                      e.target.value = "";
+                                    }}
+                                  />
+                                </label>
+                              </div>
+
+                              {/* EXISTING / NEW IMAGES */}
+                              {variant.images?.length > 0 && (
+                                <div className="image-manager">
+                                  {variant.images.map(
+                                    (img, imageIndex) => {
+                                      const isFile = img instanceof File;
+
+                                      return (
+                                        <div
+                                          className="image-thumb"
+                                          key={`${index}-${imageIndex}`}
+                                        >
+                                          <img
+                                            src={
+                                              isFile
+                                                ? URL.createObjectURL(img)
+                                                : imageUrl(img)
+                                            }
+                                            alt={`${variant.colorName} ${imageIndex + 1
+                                              }`}
+                                          />
+
+                                          <button
+                                            type="button"
+                                            title="Remove image"
+                                            aria-label="Remove color image"
+                                            onClick={() => {
+                                              const updated = [
+                                                ...form.colorVariants,
+                                              ];
+
+                                              updated[index] = {
+                                                ...updated[index],
+                                                images:
+                                                  updated[index].images.filter(
+                                                    (_, i) =>
+                                                      i !== imageIndex
+                                                  ),
+                                              };
+
+                                              setForm((prev) => ({
+                                                ...prev,
+                                                colorVariants: updated,
+                                              }));
+                                            }}
+                                          >
+                                            <Icon.Close size={12} />
+                                          </button>
+                                        </div>
+                                      );
+                                    }
+                                  )}
+                                </div>
+                              )}
+
+                              {/* REMOVE COLOR */}
+                              <button
+                                type="button"
+                                className="remove-color-btn"
+                                onClick={() => {
+                                  removeColorVariant(index);
+
+                                  setOpenColorVariant((current) => {
+                                    if (current === index) return -1;
+                                    if (current > index) return current - 1;
+                                    return current;
+                                  });
+                                }}
+                              >
+                                <Icon.Trash size={16} />
+                                Remove Color
+                              </button>
+
+                            </div>
+                          )}
+
+                        </div>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      className="btn btn-outline add-color-btn"
+                      onClick={addColorVariant}
+                    >
+                      + Add Color
+                    </button>
+
+
+                  </div>
+                </>
               )}
 
               {!isPin && (
@@ -1129,7 +1325,6 @@ export default function AdminProducts() {
                   </div>
                 </div>
               )}
-
 
 
 

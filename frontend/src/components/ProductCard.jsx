@@ -91,7 +91,12 @@ export default function ProductCard({ product, selectedColor }) {
         await removeFromWishlist(wishEntry._id);
         toast.info("Removed from wishlist.");
       } else {
-        await addToWishlist(product._id);
+        const isInskirt = product.productType === "Inskirts";
+
+        await addToWishlist(
+          product._id,
+          isInskirt ? (selectedVariant?.colorName || "") : ""
+        );
         toast.success("Saved to wishlist.");
       }
     } catch (err) {

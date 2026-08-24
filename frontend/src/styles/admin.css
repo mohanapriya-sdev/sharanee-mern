@@ -2479,3 +2479,70 @@
   width: 16px;
   height: 16px;
 }
+
+.admin-product-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.admin-product-modal-header h2 {
+  margin: 0;
+}
+
+.admin-product-close {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #4a2d1f;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.admin-product-close:hover {
+  color: #8d4b2f;
+  transform: scale(1.08);
+}
+
+.color-card-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 18px 20px;
+
+  border: none;
+  border-bottom: 1px solid #eadcc8;
+
+  background: transparent;
+  color: #4a2d1f;
+
+  font-family: var(--display);
+  font-size: 18px;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.color-card-header:hover {
+  background: #fffaf2;
+}
+
+.color-card-arrow {
+  font-family: Arial, sans-serif;
+  font-size: 24px;
+  color: #8d6f45;
+}
+
+.color-card-content {
+  padding: 20px;
+}

@@ -72,7 +72,11 @@ const generateTrackingId = async () => {
  * Product.save() is intentionally used so Product model middleware,
  * including stockStatus calculation, can run.
  */
-const adjustStock = async (productId, delta) => {
+const adjustStock = async (
+  productId,
+  delta,
+  selectedColor = ""
+) => {
   if (!productId || !isValidObjectId(productId)) {
     return;
   }
@@ -83,10 +87,40 @@ const adjustStock = async (productId, delta) => {
     return;
   }
 
-  const currentStock = Number(product.stock || 0);
   const stockChange = Number(delta || 0);
 
-  product.stock = Math.max(0, currentStock + stockChange);
+  // Inskirts: update selected color stock
+  if (product.productType === "Inskirts") {
+    const variant = product.colorVariants.find(
+      (v) =>
+        v.colorName?.toLowerCase() ===
+        String(selectedColor || "").toLowerCase()
+    );
+
+    if (!variant) {
+      throw new Error(
+        `Color ${selectedColor} not found for ${product.productName}`
+      );
+    }
+
+    variant.stock = Math.max(
+      0,
+      Number(variant.stock || 0) + stockChange
+    );
+
+    // Keep total product stock synced
+    product.stock = product.colorVariants.reduce(
+      (total, colorVariant) =>
+        total + Number(colorVariant.stock || 0),
+      0
+    );
+  } else {
+    // Pins: common stock
+    product.stock = Math.max(
+      0,
+      Number(product.stock || 0) + stockChange
+    );
+  }
 
   await product.save();
 };
@@ -231,7 +265,9 @@ const placeOrder = asyncHandler(async (req, res) => {
 
   const availableProducts = await Product.find({
     _id: { $in: productIds },
-  }).select("_id productName stock");
+  }).select(
+    "_id productName productType stock colorVariants"
+  );
 
   const productMap = new Map(
     availableProducts.map((product) => [
@@ -250,12 +286,51 @@ const placeOrder = asyncHandler(async (req, res) => {
       });
     }
 
-    if (Number(product.stock || 0) < Number(item.quantity)) {
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient stock for ${product.productName || "selected product"
-          }`,
-      });
+    // Inskirts → check selected color stock
+    if (product.productType === "Inskirts") {
+      if (!item.selectedColor) {
+        return res.status(400).json({
+          success: false,
+          message: `Please select a color for ${product.productName}`,
+        });
+      }
+
+      const variant = product.colorVariants.find(
+        (v) =>
+          v.colorName?.toLowerCase() ===
+          item.selectedColor.toLowerCase()
+      );
+
+      if (!variant) {
+        return res.status(400).json({
+          success: false,
+          message: `Selected color ${item.selectedColor} is not available for ${product.productName}`,
+        });
+      }
+
+      if (
+        Number(variant.stock || 0) <
+        Number(item.quantity)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: `Only ${variant.stock || 0} items available for ${product.productName} - ${variant.colorName}`,
+        });
+      }
+    }
+
+    // Pins → common product stock
+    else {
+      if (
+        Number(product.stock || 0) <
+        Number(item.quantity)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${product.productName || "selected product"
+            }`,
+        });
+      }
     }
   }
 
@@ -388,7 +463,11 @@ const placeOrder = asyncHandler(async (req, res) => {
   try {
     await Promise.all(
       normalizedItems.map((item) =>
-        adjustStock(item.product, -item.quantity)
+        adjustStock(
+          item.product,
+          -item.quantity,
+          item.selectedColor
+        )
       )
     );
   } catch (error) {
@@ -587,7 +666,11 @@ const cancelOrder = asyncHandler(async (req, res) => {
    */
   await Promise.all(
     order.items.map((item) =>
-      adjustStock(item.product, Number(item.quantity))
+      adjustStock(
+        item.product,
+        Number(item.quantity),
+        item.selectedColor
+      )
     )
   );
 
@@ -844,7 +927,11 @@ const updateTracking = asyncHandler(async (req, res) => {
   ) {
     await Promise.all(
       order.items.map((item) =>
-        adjustStock(item.product, Number(item.quantity))
+        adjustStock(
+          item.product,
+          Number(item.quantity),
+          item.selectedColor
+        )
       )
     );
   }

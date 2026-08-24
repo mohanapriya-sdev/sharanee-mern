@@ -57,6 +57,11 @@ const productSchema = new mongoose.Schema(
       required: true,
       default: "Inskirts",
     },
+    parentProduct: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      default: null,
+    },
     productName: {
       type: String,
       required: true,
@@ -121,6 +126,7 @@ const productSchema = new mongoose.Schema(
             "Black",
             "White",
             "Beige",
+            "Silver",
           ],
         },
 
@@ -135,7 +141,10 @@ const productSchema = new mongoose.Schema(
           type: String,
           default: "#000000",
         },
-
+        stock: {
+          type: Number,
+          default: 0,
+        },
         images: [
           {
             type: String,

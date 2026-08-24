@@ -106,7 +106,9 @@ export default function AdminCategories() {
     }
   };
 
-  let filteredCategories = [...cats];
+  let filteredCategories = [...cats].sort((a, b) =>
+    a.categoryName.localeCompare(b.categoryName)
+  );
 
   if (search.trim()) {
     filteredCategories = filteredCategories.filter(
@@ -182,10 +184,10 @@ export default function AdminCategories() {
               <div className="field">
                 <label>Category Group</label>
 
-               <select {...f("categoryGroup")}>
-  <option value="Inskirts">Inskirt Colors</option>
-  <option value="Pins">Saree Pins</option>
-</select>
+                <select {...f("categoryGroup")}>
+                  <option value="Inskirts">Inskirt Colors</option>
+                  <option value="Pins">Saree Pins</option>
+                </select>
               </div>
 
               <div className="field">

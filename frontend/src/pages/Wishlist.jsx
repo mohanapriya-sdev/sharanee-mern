@@ -34,18 +34,60 @@ export default function Wishlist() {
           <div className="wish-grid">
             {wishlist.map((w) => w.product && (
               <div key={w._id}>
-                <Link to={`/product/${w.product._id}`} className="pcard">
+                <Link
+                  to={
+                    w.selectedColor
+                      ? `/product/${w.product._id}?color=${encodeURIComponent(w.selectedColor)}`
+                      : `/product/${w.product._id}`
+                  }
+                  className="pcard"
+                >
                   <div className="pcard-media">
-                    <img
-                      src={
-                        w.product.colorVariants?.[0]?.images?.[0]
-                          ? imageUrl(w.product.colorVariants[0].images[0])
-                          : w.product.images?.[0]
-                            ? imageUrl(w.product.images[0])
-                            : "https://placehold.co/400x520/efe6d5/3f2317?text=Sharanee"
-                      }
-                      alt={w.product.productName}
-                    />
+                    {(() => {
+                      const variant =
+                        w.product.colorVariants?.find(
+                          (v) =>
+                            v.colorName?.trim().toLowerCase() ===
+                            w.selectedColor?.trim().toLowerCase()
+                        ) || w.product.colorVariants?.[0];
+
+                      console.log("================================");
+                      console.log("Wishlist Product ID:", w.product._id);
+                      console.log("Product:", w.product.productName);
+                      console.log("Selected Color:", w.selectedColor);
+
+                      console.log(
+                        "Variant Names:",
+                        w.product.colorVariants.map(v => ({
+                          family: v.colorFamily,
+                          name: v.colorName,
+                        }))
+                      );
+
+                      console.log("================================");
+                      console.log("Selected Color:", w.selectedColor);
+                      console.log(
+                        "All Variants:",
+                        w.product.colorVariants.map(v => ({
+                          colorName: v.colorName,
+                          images: v.images,
+                        }))
+                      );
+                      console.log("Matched Variant:", variant);
+
+                      return (
+                        <img
+                          src={
+                            variant?.images?.[0]
+                              ? imageUrl(variant.images[0])
+                              : w.product.images?.[0]
+                                ? imageUrl(w.product.images[0])
+                                : "https://placehold.co/400x520/efe6d5/3f2317?text=Sharanee"
+                          }
+                          alt={w.product.productName}
+                        />
+                      );
+                    })()}
                   </div>
                   <div className="pcard-body">
                     <h3 className="pcard-name">{w.product.productName}</h3>

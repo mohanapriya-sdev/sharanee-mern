@@ -103,17 +103,25 @@ export const cartApi = {
 
 // ---------- Wishlist ----------
 export const wishlistApi = {
-  add: (user, product) =>
+  add: (
+    user,
+    product,
+    selectedColor = null,
+    selectedCategory = null,
+    selectedSize = null
+  ) =>
     api.post("/wishlist", {
       user,
       product,
+      selectedColor,
+      selectedCategory,
+      selectedSize,
     }),
 
   get: (userId) => api.get(`/wishlist/${userId}`),
 
   remove: (id) => api.delete(`/wishlist/${id}`),
 };
-
 // ---------- Address ----------
 export const addressApi = {
   add: (data) => api.post("/address", data),
@@ -197,7 +205,7 @@ export const couponApi = {
 
   toggle: (id) => api.put(`/coupons/toggle/${id}`),
 };
-  
+
 
 export const discountApi = {
   list: () => api.get("/discounts"),

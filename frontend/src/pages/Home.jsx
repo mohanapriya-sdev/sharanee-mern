@@ -90,20 +90,20 @@ export default function Home() {
   const mostLoved = featured.length ? featured : latest.slice(0, 4);
   const vogue = latest.slice(4, 8);
 
-const COLOR_ORDER = [
-  "Yellow",
-  "Red",
-  "Green",
-  "Blue",
-  "Pink",
-];
-const COLOR_IMAGES = {
-  Yellow: "/images/yellow.png",
-  Red: "/images/red.png",
-  Green: "/images/green.png",
-  Blue: "/images/blue.png",
-  Pink: "/images/pink.png",
-};
+  const COLOR_ORDER = [
+    "Yellow",
+    "Red",
+    "Green",
+    "Blue",
+    "Pink",
+  ];
+  const COLOR_IMAGES = {
+    Yellow: "/images/yellow.png",
+    Red: "/images/red.png",
+    Green: "/images/green.png",
+    Blue: "/images/blue.png",
+    Pink: "/images/pink.png",
+  };
   const PIN_ORDER = [
     "Safety Pins",
     "Pleat Pins",
@@ -122,10 +122,10 @@ const COLOR_IMAGES = {
       )?.img,
   });
 
- const colorTiles = COLOR_ORDER.map((color) => ({
-  name: color,
-  img: COLOR_IMAGES[color],
-}));
+  const colorTiles = COLOR_ORDER.map((color) => ({
+    name: color,
+    img: COLOR_IMAGES[color],
+  }));
 
   /* PINS FROM BACKEND */
   /* PINS */
@@ -220,14 +220,12 @@ const COLOR_IMAGES = {
           <div className="cat-grid">
             {colorTiles.map((c, i) => (
               <Link
-               to={`/shop?color=${encodeURIComponent(c.name)}`}
+                to={`/shop?color=${encodeURIComponent(c.name)}`}
                 className="cat-tile"
                 key={i}
               >
-                <div className="cat-arch-frame">
-                  <div className="cat-arch-inner">
-                    <img src={c.img} alt={c.name} />
-                  </div>
+                <div className="cat-rectangle-frame">
+                  <img src={c.img} alt={c.name} />
                 </div>
                 {/* <span>{c.name}</span> */}
               </Link>

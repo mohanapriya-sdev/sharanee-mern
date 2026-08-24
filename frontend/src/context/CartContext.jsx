@@ -57,8 +57,20 @@ export function CartProvider({ children }) {
     await refreshCart();
   };
 
-  const addToWishlist = async (productId) => {
-    await wishlistApi.add(user.id, productId);
+  const addToWishlist = async (
+    productId,
+    selectedColor = null,
+    selectedCategory = null,
+    selectedSize = null
+  ) => {
+    await wishlistApi.add(
+      user.id,
+      productId,
+      selectedColor,
+      selectedCategory,
+      selectedSize
+    );
+
     await refreshWishlist();
   };
   const removeFromWishlist = async (id) => {

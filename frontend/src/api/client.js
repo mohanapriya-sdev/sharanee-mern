@@ -23,8 +23,17 @@ api.interceptors.request.use((config) => {
 // The backend stores paths like "uploads/products/123.jpg".
 export function imageUrl(path) {
   if (!path) return "";
-  if (path.startsWith("http")) return path;
-  const clean = path.replace(/\\/g, "/").replace(/^\/?/, "/");
+
+  // Already a complete URL
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
+  // Convert Windows "\" paths to "/"
+  const clean = path
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "/");
+
   return `${BASE}${clean}`;
 }
 

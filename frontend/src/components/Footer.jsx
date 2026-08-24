@@ -65,24 +65,8 @@ export default function Footer() {
           <div className="foot-col">
             <h4>Colors</h4>
 
-            <Link to="/shop?category=Cotton%20Inskirts">
-              Cotton Inskirt
-            </Link>
-
-            <Link to="/shop?category=Silk%20Inskirts">
-              Silk Inskirt
-            </Link>
-
-            <Link to="/shop?category=Mermaid%20Inskirts">
-              Mermaid Inskirt
-            </Link>
-
-            <Link to="/shop?category=Fish%20Cut%20Inskirts">
-              Fish Cut Inskirt
-            </Link>
-
-            <Link to="/shop?category=Bridal%20Inskirts">
-              Bridal Inskirt
+            <Link to="/shop?productType=Inskirts">
+              Inskirts
             </Link>
 
             <Link to="/shop?category=Safety%20Pins">
@@ -104,8 +88,9 @@ export default function Footer() {
             <Link to="/shop?category=Brooch%20Pins">
               Brooch Pins
             </Link>
-
           </div>
+
+
           {/*
           <div className="foot-col">
             <h4>The Company</h4>

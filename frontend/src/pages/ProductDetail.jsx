@@ -1,9 +1,4 @@
 import { useEffect, useState } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
-
-import "swiper/css";
-import "swiper/css/navigation";
 import {
   Link,
   useParams,
@@ -32,6 +27,7 @@ export default function ProductDetail() {
 
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
+  const [linkedProducts, setLinkedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(0);
   const [selectedColor, setSelectedColor] = useState(null);
@@ -45,6 +41,8 @@ export default function ProductDetail() {
   const loadReviews = () => reviewApi.forProduct(id).then((r) => setReviews(r.data.reviews || [])).catch(() => { });
   const [selectedFamily, setSelectedFamily] = useState("");
   const [familyColors, setFamilyColors] = useState([]);
+  const [familyPage, setFamilyPage] = useState(0);
+  const [baseColorPage, setBaseColorPage] = useState(0);
 
 
   useEffect(() => {
@@ -54,7 +52,34 @@ export default function ProductDetail() {
       .then((r) => {
         const p = r.data.product;
         setProduct(p);
-        const grouped = p.colorVariants.reduce((acc, color) => {
+        const allVariants = [
+          ...(p.colorVariants || [])
+        ];
+
+        const initialColor = colorFromUrl
+          ? allVariants.find(
+            v =>
+              v.colorName?.toLowerCase() === colorFromUrl.toLowerCase()
+          )
+          : allVariants[0];
+
+        if (initialColor) {
+          setSelectedColor(initialColor);
+
+          if (initialColor.sizes?.length > 0) {
+            setSelectedSize(initialColor.sizes[0]);
+          }
+
+          setSelectedFamily(initialColor.colorFamily);
+        }
+        productApi.list({ parentProduct: p._id })
+          .then((rr) => {
+            setLinkedProducts(rr.data.products || []);
+          })
+          .catch(() => {
+            setLinkedProducts([]);
+          });
+        const grouped = (p.colorVariants || []).reduce((acc, color) => {
           const family = color.colorFamily || "Others";
 
           if (!acc[family]) acc[family] = [];
@@ -64,30 +89,20 @@ export default function ProductDetail() {
           return acc;
         }, {});
 
-        const firstFamily = Object.keys(grouped)[0];
+        const firstFamily = initialColor
+          ? initialColor.colorFamily
+          : Object.keys(grouped)[0];
 
         setSelectedFamily(firstFamily);
-        setFamilyColors(grouped[firstFamily]);
+        setFamilyColors(grouped[firstFamily] || []);
+
+
         console.log("Product Data:", p);
         console.log("Color Variants:", p.colorVariants);
+        console.log("Color Families:", Object.keys(grouped));
         setActive(0);
         setQty(1);
-        const matchedColor = colorFromUrl
-          ? p.colorVariants?.find(
-            (c) =>
-              c.colorName?.toLowerCase() === colorFromUrl.toLowerCase()
-          )
-          : null;
 
-        setSelectedColor(matchedColor || null);
-
-        if (matchedColor?.sizes?.length > 0) {
-          setSelectedSize(matchedColor.sizes[0]);
-        } else if (p.size?.length > 0) {
-          setSelectedSize(p.size[0]);
-        } else {
-          setSelectedSize("");
-        }
         // related: same category
         const catId = p.category?._id || p.category;
         if (catId) {
@@ -109,13 +124,53 @@ export default function ProductDetail() {
 
     // eslint-disable-next-line
   }, [id, colorFromUrl]);
+  useEffect(() => {
+    if (!product) return;
 
+    const parentVariants = product.colorVariants || [];
+
+    const childVariants = linkedProducts.flatMap(
+      (linkedProduct) => linkedProduct.colorVariants || []
+    );
+
+    const allVariants = [...parentVariants, ...childVariants];
+
+    const matchedColor = colorFromUrl
+      ? allVariants.find(
+        (c) =>
+          c.colorName?.toLowerCase() === colorFromUrl.toLowerCase()
+      )
+      : null;
+
+    if (matchedColor) {
+      setSelectedColor(matchedColor);
+      setActive(0);
+
+      if (matchedColor.sizes?.length > 0) {
+        setSelectedSize(matchedColor.sizes[0]);
+      } else if (product.size?.length > 0) {
+        setSelectedSize(product.size[0]);
+      } else {
+        setSelectedSize("");
+      }
+
+      const family = matchedColor.colorFamily || "Others";
+
+      setSelectedFamily(family);
+
+      const familyVariants = allVariants.filter(
+        (variant) => variant.colorFamily === family
+      );
+
+      setFamilyColors(familyVariants);
+      setBaseColorPage(0);
+    }
+  }, [product, linkedProducts, colorFromUrl]);
   if (loading) return <div className="spinner" />;
   if (!product) return <div className="empty"><h3>Product not found</h3><Link className="btn" to="/shop">Back to Shop</Link></div>;
 
   const isPins = product.productType === "Pins";
-
-  const groupedColors = product?.colorVariants?.reduce((acc, color) => {
+  const groupedColors = (product?.colorVariants || []).reduce((acc, color) => {
     const family = color.colorFamily || "Others";
 
     if (!acc[family]) {
@@ -127,14 +182,58 @@ export default function ProductDetail() {
     return acc;
   }, {}) || {};
 
-  const defaultImages = isPins
-    ? (product.images || []).map(imageUrl)
-    : product.colorVariants?.[0]?.images?.length
-      ? product.colorVariants[0].images.map(imageUrl)
-      : [];
+  // Add colors from linked/child products
+  linkedProducts.forEach((linkedProduct) => {
+    (linkedProduct.colorVariants || []).forEach((color) => {
+      const family = color.colorFamily || "Others";
+
+      if (!groupedColors[family]) {
+        groupedColors[family] = [];
+      }
+
+      groupedColors[family].push({
+        ...color,
+        _linkedProductId: linkedProduct._id,
+        _linkedProductName: linkedProduct.productName,
+      });
+    });
+  });
+
+  const families = Object.keys(groupedColors);
+  const familiesPerPage = 5;
+  const familyPages = Math.ceil(families.length / familiesPerPage);
+
+  const visibleFamilies = families.slice(
+    familyPage * familiesPerPage,
+    familyPage * familiesPerPage + familiesPerPage
+  );
+
+  const baseColorsPerPage = 5;
+
+  const baseColorPages = Math.ceil(
+    (familyColors?.length || 0) / baseColorsPerPage
+  );
+
+  const visibleBaseColors = (familyColors || []).slice(
+    baseColorPage * baseColorsPerPage,
+    baseColorPage * baseColorsPerPage + baseColorsPerPage
+  );
+
+  console.log("Grouped Families:", Object.keys(groupedColors)); const variants = product.colorVariants || [];
+
+  const defaultImages =
+    isPins
+      ? (product.images || []).map(imageUrl)
+      : selectedColor?.images?.length
+        ? selectedColor.images.map(imageUrl)
+        : variants[0]?.images?.length
+          ? variants[0].images.map(imageUrl)
+          : [];
+
 
   const imgs =
     !isPins && selectedColor?.images?.length
+
       ? selectedColor.images.map(imageUrl)
       : defaultImages.length
         ? defaultImages
@@ -194,7 +293,16 @@ export default function ProductDetail() {
       toast.error("Could not proceed.");
     }
   };
-  const wish = async () => { if (!guard()) return; try { await addToWishlist(product._id); toast.success("Saved to wishlist."); } catch (e) { toast.error(e.response?.data?.message || "Already saved."); } };
+  const wish = async () => {
+    if (!guard()) return; try {
+      await addToWishlist(
+        product._id,
+        selectedColor?.colorName,
+        selectedFamily,
+        selectedSize
+      ); toast.success("Saved to wishlist.");
+    } catch (e) { toast.error(e.response?.data?.message || "Already saved."); }
+  };
 
   const submitReview = async (e) => {
     e.preventDefault();
@@ -298,72 +406,147 @@ export default function ProductDetail() {
                   </div>
                 </div>
               )}
+
               {!isPins && (
                 <div className="pdp-meta-item">
                   <b>COLOR FAMILY</b>
+                  <div className="family-carousel">
 
-                  <Swiper
-                    modules={[Navigation]}
-                    navigation
-                    slidesPerView={5}
-                    spaceBetween={20}
-                  >
-                    {Object.keys(groupedColors).map((family) => (
-                      <SwiperSlide key={family}>
-                        <div className="family-item">
-                          <button
-                            className={
-                              selectedFamily === family
-                                ? "family-btn active"
-                                : "family-btn"
-                            }
-                            style={{
-                              backgroundColor: groupedColors[family][0]?.colorCode
-                            }}
-                            onClick={() => {
-                              setSelectedFamily(family);
-                              setFamilyColors(groupedColors[family]);
-                            }}
-                          />
-                          <span className="family-name">{family}</span>
-                        </div>
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
+                    <button
+                      type="button"
+                      className="family-nav prev"
+                      onClick={() =>
+                        setFamilyPage((p) => Math.max(0, p - 1))
+                      }
+                      disabled={familyPage === 0}
+                    >
+                      ‹
+                    </button>
+                    <div className="family-track">
+                      {Array.from({ length: familiesPerPage }, (_, index) => {
+                        const family = visibleFamilies[index];
 
-                  {familyColors.length > 0 && (
+                        return (
+                          <div
+                            className="family-item"
+                            key={family || `empty-family-${index}`}
+                          >
+                            {family && (
+                              <>
+                                <button
+                                  type="button"
+                                  className={
+                                    selectedFamily === family
+                                      ? "family-btn active"
+                                      : "family-btn"
+                                  }
+                                  style={{
+                                    backgroundColor:
+                                      groupedColors[family]?.[0]?.colorCode || "#ccc",
+                                  }}
+                                  onClick={() => {
+                                    setSelectedFamily(family);
+                                    setFamilyColors(groupedColors[family]);
+                                    setBaseColorPage(0);
+                                  }}
+                                />
+
+                                <span className="family-name">{family}</span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="family-nav next"
+                      onClick={() =>
+                        setFamilyPage((p) =>
+                          Math.min(familyPages - 1, p + 1)
+                        )
+                      }
+                      disabled={familyPage >= familyPages - 1}
+                    >
+                      ›
+                    </button>
+
+                  </div>
+                  {familyColors?.length > 0 && (
                     <>
                       <b style={{ marginTop: 20, display: "block" }}>
                         BASE COLORS
                       </b>
 
-                      <div className="base-color-list">
-                        {familyColors.map((c, index) => (
-                          <button
-                            key={index}
-                            className={
-                              selectedColor?.colorName === c.colorName
-                                ? "color-btn active"
-                                : "color-btn"
-                            }
-                            onClick={() => {
-                              setSelectedColor(c);
-                              setActive(0);
+                      <div className="base-color-carousel">
 
-                              if (c.sizes?.length > 0) {
-                                setSelectedSize(c.sizes[0]);
-                              } else {
-                                setSelectedSize("");
-                              }
-                            }}
-                          >
-                            <span
-                              className="color-circle"
-                              style={{ background: c.colorCode }}
-                            />
-                            <span>{c.colorName}</span>
-                          </button>
-                        ))}
+                        <button
+                          type="button"
+                          className="base-color-nav"
+                          onClick={() =>
+                            setBaseColorPage((p) => Math.max(0, p - 1))
+                          }
+                          disabled={baseColorPage === 0}
+                        >
+                          ‹
+                        </button>
+
+                        <div className="base-color-track">
+                          {Array.from({ length: baseColorsPerPage }, (_, index) => {
+                            const c = visibleBaseColors[index];
+
+                            return (
+                              <div
+                                className="base-color-slot"
+                                key={c?._id || `empty-base-${index}`}
+                              >
+                                {c && (
+                                  <button
+                                    type="button"
+                                    className={
+                                      selectedColor?.colorName === c.colorName
+                                        ? "color-btn active"
+                                        : "color-btn"
+                                    }
+                                    onClick={() => {
+                                      setSelectedColor(c);
+                                      setSelectedFamily(c.colorFamily);
+                                      setSelectedSize(c.sizes?.[0] || "");
+                                      setActive(0);
+
+                                      navigate(
+                                        `/product/${product._id}?color=${encodeURIComponent(c.colorName)}`,
+                                        { replace: true }
+                                      );
+                                    }}
+                                  >
+                                    <span
+                                      className="color-circle"
+                                      style={{ background: c.colorCode }}
+                                    />
+
+                                    <span>{c.colorName}</span>
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <button
+                          type="button"
+                          className="base-color-nav"
+                          onClick={() =>
+                            setBaseColorPage((p) =>
+                              Math.min(baseColorPages - 1, p + 1)
+                            )
+                          }
+                          disabled={baseColorPage >= baseColorPages - 1}
+                        >
+                          ›
+                        </button>
+
                       </div>
                     </>
                   )}

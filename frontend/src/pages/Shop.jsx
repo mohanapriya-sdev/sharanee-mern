@@ -41,6 +41,7 @@ export default function Shop() {
   const [mobileFilters, setMobileFilters] = useState(false);
   const [currentImage, setCurrentImage] = useState({});
   const search = params.get("search") || "";
+  const productType = params.get("productType") || "";
   const category = params.get("category") || "";
   const sort = params.get("sort") || "";
   const group = params.get("group") || "";
@@ -50,6 +51,7 @@ export default function Shop() {
   const price = params.get("price") || "";
   const availability = params.get("availability") || "";
   const featured = params.get("featured") || "";
+  const productId = params.get("product") || "";
 
   // Categories (for circles + product-type dropdown) and a full product list
   // (for deriving colour/fabric/tag/price options) — fetched once.
@@ -83,6 +85,7 @@ export default function Shop() {
     setLoading(true);
     const q = {};
     if (search) q.search = search;
+    if (productType) q.productType = productType;
     if (category) q.category = category;
     if (sort) q.sort = sort;
     if (fabric) q.fabric = fabric;
@@ -96,11 +99,24 @@ export default function Shop() {
     }
 
 
-    productApi.list(q)
+    productApi.list({
+      ...q,
+      mainOnly: "true",
+    })
       .then((r) => setProducts(r.data.products || []))
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
-  }, [search, category, sort, fabric, color, occasion, price, featured]);
+  }, [
+    search,
+    productType,
+    category,
+    sort,
+    fabric,
+    color,
+    occasion,
+    price,
+    featured,
+  ]);
 
   const setParam = (key, val) => {
     const next = new URLSearchParams(params);
@@ -155,7 +171,6 @@ export default function Shop() {
         return allowedCategories.includes(productCategory);
       });
     }
-
     // Availability filter
     if (availability) {
       result = result.filter((p) =>
@@ -165,6 +180,11 @@ export default function Shop() {
       );
     }
 
+    // Show only the selected product
+    if (productId) {
+      result = result.filter((p) => p._id === productId);
+    }
+
     return result;
   }, [
     products,
@@ -172,6 +192,7 @@ export default function Shop() {
     group,
     inskirtCategories,
     pinCategories,
+    productId,
   ]);
 
   // Derive option lists from the full catalogue so options never disappear.
@@ -200,16 +221,16 @@ export default function Shop() {
     value: c.categoryName,
     label: c.categoryName,
   }));
-const colorCircles = inskirtCategories.map((c, i) => ({
-  id: c.categoryName,
-  name: c.categoryName,
-  img: c.categoryImages?.length
-    ? imageUrl(
+  const colorCircles = inskirtCategories.map((c, i) => ({
+    id: c.categoryName,
+    name: c.categoryName,
+    img: c.categoryImages?.length
+      ? imageUrl(
         c.categoryImages[currentImage[c._id] || 0]
       )
-    : CIRCLE_FALLBACK[i % CIRCLE_FALLBACK.length],
-}));
-    
+      : CIRCLE_FALLBACK[i % CIRCLE_FALLBACK.length],
+  }));
+
   console.log("Categories:", cats);
   const pinCircles = pinCategories.length
     ? pinCategories.map((c, i) => ({
@@ -243,13 +264,13 @@ const colorCircles = inskirtCategories.map((c, i) => ({
       <div className="crumb">
         <div className="container">
           <Link to="/">Home</Link><span className="sep">›</span>
-        {search
-  ? `Search: ${search}`
-  : color
-    ? `${color} Inskirts`
-    : category
-      ? (catOpts.find((c) => c.value === category)?.label || "Shop")
-      : "Shop All"}
+          {search
+            ? `Search: ${search}`
+            : color
+              ? `${color} Inskirts`
+              : category
+                ? (catOpts.find((c) => c.value === category)?.label || "Shop")
+                : "Shop All"}
         </div>
       </div>
       <ShopHero />
@@ -263,38 +284,38 @@ const colorCircles = inskirtCategories.map((c, i) => ({
 
           <div className="container">
             <div className="circle-row">
-          {colorCircles.map((c, i) => {
-const isActive =
-  color.toLowerCase() === c.name.toLowerCase();
+              {colorCircles.map((c, i) => {
+                const isActive =
+                  color.toLowerCase() === c.name.toLowerCase();
 
-  return (
-    <button
-      key={i}
-      className={`circle ${isActive ? "active" : ""}`}
-   onClick={() => {
-  const next = new URLSearchParams(params);
+                return (
+                  <button
+                    key={i}
+                    className={`circle ${isActive ? "active" : ""}`}
+                    onClick={() => {
+                      const next = new URLSearchParams(params);
 
-  if (isActive) {
-    next.delete("color");
-  } else {
-    next.set("color", c.name);
-  }
+                      if (isActive) {
+                        next.delete("color");
+                      } else {
+                        next.set("color", c.name);
+                      }
 
-  next.delete("category");
+                      next.delete("category");
 
-  setParams(next);
-}}
-    >
-      <span className="circle-img">
-        <img src={c.img} alt={`${c.name} Inskirt`} />
-      </span>
+                      setParams(next);
+                    }}
+                  >
+                    <span className="circle-img">
+                      <img src={c.img} alt={`${c.name} Inskirt`} />
+                    </span>
 
-      <span className="circle-label">
-        {c.name}
-      </span>
-    </button>
-  );
-})}
+                    <span className="circle-label">
+                      {c.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </>
