@@ -231,11 +231,11 @@ export default function Header() {
                             >
                                 <Icon.Wishlist />
 
-                                {/*  {wishlist.length > 0 && (
+                                {wishlist.length > 0 && (
                                     <span className="icon-count">
                                         {wishlist.length}
                                     </span>
-                                )}  */}
+                                )}
                             </Link>
                         )}
 

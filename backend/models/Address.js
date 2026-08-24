@@ -10,6 +10,9 @@ const addressSchema = new mongoose.Schema(
     area: { type: String, required: true },
     landmark: { type: String, default: "" },
     city: { type: String, required: true },
+
+    district: { type: String, required: true },
+
     state: { type: String, required: true },
     pincode: { type: String, required: true },
     addressType: { type: String, enum: ["Home", "Work", "Other"], default: "Home" },

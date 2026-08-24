@@ -1,4 +1,5 @@
 const Address = require("../models/Address");
+const axios = require("axios");
 const asyncHandler = require("../utils/asyncHandler");
 
 // @route  POST /api/address
@@ -27,4 +28,57 @@ const removeAddress = asyncHandler(async (req, res) => {
   res.json({ message: "Address removed" });
 });
 
-module.exports = { addAddress, getAddresses, updateAddress, removeAddress };
+// @route GET /api/address/verify-pincode/:pincode
+
+const verifyPincode = asyncHandler(async (req, res) => {
+  const { pincode } = req.params;
+
+  // Basic validation
+  if (!/^\d{6}$/.test(pincode)) {
+    return res.status(400).json({
+      success: false,
+      message: "PIN code must contain exactly 6 digits.",
+    });
+  }
+
+  try {
+    const { data } = await axios.get(
+      `https://api.postalpincode.in/pincode/${pincode}`
+    );
+
+    if (
+      !data ||
+      !data.length ||
+      data[0].Status !== "Success"
+    ) {
+      return res.json({
+        success: false,
+        message: "Invalid PIN code.",
+      });
+    }
+
+    const office = data[0].PostOffice[0];
+
+    return res.json({
+      success: true,
+      message: "PIN code verified for this address.",
+      postOffice: office.Name,
+      district: office.District,
+      city: office.Block || office.Division,
+      state: office.State,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Unable to verify PIN code.",
+    });
+  }
+});
+
+module.exports = {
+  addAddress,
+  getAddresses,
+  updateAddress,
+  removeAddress,
+  verifyPincode,
+};

@@ -132,6 +132,9 @@ export const addressApi = {
     api.put(`/address/${id}`, data),
 
   remove: (id) => api.delete(`/address/${id}`),
+
+  verifyPincode: (pincode) =>
+    api.get(`/address/verify-pincode/${pincode}`),
 };
 
 // ---------- Orders ----------

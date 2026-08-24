@@ -7,8 +7,17 @@ import { useToast } from "../context/ToastContext";
 import { imageUrl } from "../api/client";
 
 const EMPTY = {
-  fullName: "", mobile: "", alternateMobile: "", houseNo: "", area: "",
-  landmark: "", city: "", state: "", pincode: "", addressType: "Home",
+  fullName: "",
+  mobile: "",
+  alternateMobile: "",
+  houseNo: "",
+  area: "",
+  landmark: "",
+  city: "",
+  district: "",
+  state: "",
+  pincode: "",
+  addressType: "Home",
 };
 
 export default function Checkout() {
@@ -29,6 +38,9 @@ export default function Checkout() {
   const [form, setForm] = useState(EMPTY);
   const [payment, setPayment] = useState("COD");
   const [placing, setPlacing] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinValid, setPinValid] = useState(null);
+  const [pinMessage, setPinMessage] = useState("");
 
   const [settings, setSettings] = useState({
     codEnabled: false,
@@ -126,6 +138,44 @@ export default function Checkout() {
   const priceOf = (p) => p.finalPrice || p.price;
   const grand = Math.max(0, cartTotal - discount) + shipping;
 
+
+  const verifyPincode = async (pincode) => {
+    // Reset state if PIN is not 6 digits
+    if (!/^\d{6}$/.test(pincode)) {
+      setPinValid(null);
+      setPinMessage("");
+      return;
+    }
+
+    try {
+      setPinLoading(true);
+
+      const { data } = await addressApi.verifyPincode(pincode);
+
+      if (data.success) {
+        setPinValid(true);
+        setPinMessage("PIN code verified for this address.");
+
+        setForm((prev) => ({
+          ...prev,
+          pincode,
+          district: data.district,
+          state: data.state,
+          city: data.city || "",
+        }));
+      }
+      else {
+        setPinValid(false);
+        setPinMessage(data.message || "Invalid PIN Code");
+      }
+    } catch (err) {
+      setPinValid(false);
+      setPinMessage("Unable to verify PIN Code");
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
   const saveAddress = async (e) => {
     e.preventDefault();
     try {
@@ -198,7 +248,9 @@ export default function Checkout() {
                 <div>
                   <b>{a.fullName}</b> <span className="status-pill">{a.addressType}</span>
                   <div style={{ color: "var(--cocoa-soft)", fontSize: "0.9rem", marginTop: 4 }}>
-                    {a.houseNo}, {a.area}{a.landmark ? `, ${a.landmark}` : ""}, {a.city}, {a.state} — {a.pincode}
+                    {a.houseNo}, {a.area}
+                    {a.landmark ? `, ${a.landmark}` : ""}
+                    , {a.city}, {a.district}, {a.state} - {a.pincode}
                   </div>
                   <small style={{ color: "var(--muted)" }}>Mobile: {a.mobile}</small>
                 </div>
@@ -219,13 +271,79 @@ export default function Checkout() {
                   <div className="field"><label>Area / Street</label><input required {...f("area")} /></div>
                 </div>
                 <div className="form-2col">
-                  <div className="field"><label>Landmark</label><input {...f("landmark")} /></div>
-                  <div className="field"><label>City</label><input required {...f("city")} /></div>
+                  <div className="field">
+                    <label>City</label>
+                    <input
+                      value={form.city}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          city: e.target.value,
+                        })
+                      }
+                      placeholder="Enter City / Town / Village"
+                    />
+                  </div>
                 </div>
+
                 <div className="form-2col">
-                  <div className="field"><label>State</label><input required {...f("state")} /></div>
-                  <div className="field"><label>Pincode</label><input required {...f("pincode")} /></div>
+                  <div className="field">
+                    <label>District</label>
+                    <input
+                      value={form.district}
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>State</label>
+                    <input
+                      value={form.state}
+                      readOnly
+                    />
+                  </div>
                 </div>
+
+                <div className="field">
+                  <label>Pincode</label>
+
+                  <input
+                    required
+                    value={form.pincode}
+                    maxLength={6}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+
+                      setForm({
+                        ...form,
+                        pincode: value,
+                      });
+
+                      verifyPincode(value);
+                    }}
+                  />
+
+                  {pinLoading && (
+                    <small style={{ color: "#666" }}>
+                      Checking PIN code...
+                    </small>
+                  )}
+
+                  {!pinLoading && pinValid === true && (
+                    <small style={{ color: "green" }}>
+                      ✓ {pinMessage}
+                    </small>
+                  )}
+
+                  {!pinLoading && pinValid === false && (
+                    <small style={{ color: "red" }}>
+                      ✗ {pinMessage}
+                    </small>
+                  )}
+                </div>
+
                 <div className="field">
                   <label>Address Type</label>
                   <select {...f("addressType")}>
@@ -415,6 +533,6 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
