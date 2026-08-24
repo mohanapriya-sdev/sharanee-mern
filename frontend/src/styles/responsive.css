@@ -482,7 +482,8 @@ video {
 /* ============================================================
    PRODUCT DETAIL
    ============================================================ */
-@media (max-width: 600px) {
+@media (max-width:600px) {
+
   .pdp {
     gap: 22px;
     padding: 28px 0;
@@ -505,6 +506,7 @@ video {
     width: 60px;
     height: 78px;
   }
+
 }
 
 /* ============================================================
@@ -650,8 +652,7 @@ video {
   .contact-grid,
   .split,
   .shop-layout,
-  .cart-grid,
-  .pdp {
+  .cart-grid {
     grid-template-columns: 1fr !important;
   }
 
@@ -694,18 +695,10 @@ video {
     align-items: flex-start;
   }
 
-  .pdp-gallery {
-    grid-template-columns: 1fr;
-  }
 
-  .pdp-thumbs {
-    flex-direction: row;
-    overflow: auto;
-  }
 
-  .pdp-main {
-    height: auto;
-  }
+
+
 
   .header-cart {
     display: none;

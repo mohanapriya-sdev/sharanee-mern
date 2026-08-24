@@ -623,3 +623,261 @@ input[type="color"] {
     width: 42px;
     height: 42px;
 }
+
+/* =========================================
+   PRODUCT DETAILS MOBILE RESPONSIVE
+========================================= */
+@media (max-width:768px) {
+
+    .pdp {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .pdp-gallery {
+        width: 100%;
+    }
+
+    .pdp-main {
+        width: 100%;
+    }
+
+    .pdp-main img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .pdp-thumbs {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .pdp-thumb {
+        min-width: 70px;
+        width: 70px;
+        height: 90px;
+    }
+
+    .pdp-info {
+        width: 100%;
+    }
+
+    .family-track {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+    }
+
+    .base-color-track {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+    }
+
+    .family-item,
+    .color-btn {
+        flex: 0 0 auto;
+    }
+
+    .family-nav,
+    .base-color-nav {
+        display: none;
+    }
+
+    .size-options {
+        flex-wrap: wrap;
+    }
+
+    .size-btn {
+        width: 46px;
+        height: 46px;
+    }
+
+    .pdp-buy,
+    .pdp-buy2 {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .qty {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+}
+
+/* ==========================================
+   PRODUCT DETAILS MOBILE
+========================================== */
+
+@media (max-width:768px) {
+
+    .pdp {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 15px;
+    }
+
+    .pdp-gallery {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .pdp-main {
+        width: 100%;
+        order: 1;
+    }
+
+    .pdp-main img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain;
+        border-radius: 12px;
+    }
+
+    .pdp-thumbs {
+        order: 2;
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 10px;
+        margin-top: 15px;
+        padding-bottom: 5px;
+    }
+
+    .pdp-thumb {
+        flex: 0 0 70px;
+        width: 70px;
+        height: 90px;
+    }
+
+    .pdp-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .pdp-info {
+        width: 100%;
+    }
+
+}
+
+
+/* ==========================================
+   PRODUCT DETAILS - MOBILE FIX
+==========================================*/
+@media (max-width:768px) {
+
+    .pdp {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px;
+    }
+
+    .pdp-gallery {
+        width: 100% !important;
+        order: 1;
+    }
+
+    .pdp-info {
+        width: 100% !important;
+        order: 2;
+    }
+
+    .pdp-main {
+        width: 100%;
+        height: auto;
+    }
+
+    .pdp-main img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    /* thumbnails below image */
+    .pdp-thumbs {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        width: 100%;
+        margin-top: 12px;
+    }
+
+    .pdp-thumb {
+        width: 70px;
+        min-width: 70px;
+        height: 90px;
+    }
+
+    .pdp-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .pdp-buy,
+    .pdp-buy2 {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .qty {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .family-track,
+    .base-color-track {
+        display: flex;
+        overflow-x: auto;
+        gap: 16px;
+    }
+
+    .family-nav,
+    .base-color-nav {
+        display: none;
+    }
+
+    .review-summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .review-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .review-card {
+        padding: 16px;
+    }
+
+    .review-text {
+        font-size: 14px;
+    }
+
+    .write-review {
+        padding: 18px;
+    }
+
+}
