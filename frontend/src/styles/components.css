@@ -2513,3 +2513,123 @@
 .cat-rectangle-frame:hover img {
   transform: scale(1.05);
 }
+
+/* =====================================
+   MOBILE RESPONSIVE
+===================================== */
+
+@media (max-width:768px) {
+
+  /* Product Details */
+  .pdp {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    padding: 0 16px;
+  }
+
+  .pdp-gallery {
+    position: static;
+    grid-template-columns: 1fr;
+  }
+
+  .pdp-thumbs {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .pdp-thumb {
+    width: 70px;
+    height: 90px;
+  }
+
+  .pdp-main {
+    height: auto;
+    aspect-ratio: 3/4;
+  }
+
+  .pdp-info h1 {
+    font-size: 30px;
+  }
+
+  .pdp-desc {
+    max-width: 100%;
+  }
+
+  /* Product Meta */
+  .pdp-meta {
+    gap: 18px;
+  }
+
+  .family-track,
+  .base-color-track {
+    display: flex;
+    overflow-x: auto;
+    gap: 18px;
+  }
+
+  /* Orders */
+
+  .orders-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-head {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .premium-order-item {
+    flex-direction: column;
+  }
+
+  .product-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-actions .btn {
+    width: 100%;
+  }
+
+  .order-timeline {
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 10px;
+  }
+
+  /* Review */
+
+  .review-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .review-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Shop */
+
+  .shop-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Header */
+
+  .header .container {
+    height: 72px;
+  }
+
+  .brand img {
+    height: 60px;
+  }
+
+  /* Footer */
+
+  .foot-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
