@@ -69,5 +69,5 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Sharanee API server running on http://localhost:${PORT}`);
+  console.log(`Sharanee API server is running on port ${PORT}`);
 });
