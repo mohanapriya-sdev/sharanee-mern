@@ -149,277 +149,288 @@ const deleteImageFiles = (images = []) => {
 // search, category, fabric, color, occasion, pattern,
 // size, featured, minPrice, maxPrice, sort
 const listProducts = asyncHandler(async (req, res) => {
-  const {
-    search,
-    productType,
-    category,
-    fabric,
-    color,
-    occasion,
-    pattern,
-    size,
-    featured,
-    minPrice,
-    maxPrice,
-    sort,
-    parentProduct,
-  } = req.query;
+  try {
+    const {
+      search,
+      productType,
+      category,
+      fabric,
+      color,
+      occasion,
+      pattern,
+      size,
+      featured,
+      minPrice,
+      maxPrice,
+      sort,
+      parentProduct,
+    } = req.query;
 
-  const filter = {};
+    const filter = {};
 
-  if (req.query.mainOnly === "true") {
-    filter.parentProduct = null;
-  }
-  if (parentProduct) {
-    filter.parentProduct = parentProduct;
-  }
-  if (productType) {
-    filter.productType = productType;
-  }
-  if (search) {
-    const searchTerm = search.trim();
+    if (req.query.mainOnly === "true") {
+      filter.parentProduct = null;
+    }
+    if (parentProduct) {
+      filter.parentProduct = parentProduct;
+    }
+    if (productType) {
+      filter.productType = productType;
+    }
+    if (search) {
+      const searchTerm = search.trim();
 
-    const escapedSearch = searchTerm.replace(
-      /[.*+?^${}()|[\]\\]/g,
-      "\\$&"
-    );
+      const escapedSearch = searchTerm.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
 
-    const searchRegex = new RegExp(escapedSearch, "i");
+      const searchRegex = new RegExp(escapedSearch, "i");
 
-    const matchingCategories = await Category.find({
-      categoryName: searchRegex,
-    }).select("_id");
+      const matchingCategories = await Category.find({
+        categoryName: searchRegex,
+      }).select("_id");
 
-    const categoryIds = matchingCategories.map(
-      (category) => category._id
-    );
+      const categoryIds = matchingCategories.map(
+        (category) => category._id
+      );
 
-    filter.$or = [
-      { productName: searchRegex },
-      { productType: searchRegex },
-    ];
+      filter.$or = [
+        { productName: searchRegex },
+        { productType: searchRegex },
+      ];
 
-    if (categoryIds.length > 0) {
-      filter.$or.push({
-        category: { $in: categoryIds },
+      if (categoryIds.length > 0) {
+        filter.$or.push({
+          category: { $in: categoryIds },
+        });
+      }
+    }
+
+    if (category) {
+      const categoryDoc = await Category.findOne({
+        categoryName: {
+          $regex: `^${category.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          $options: "i",
+        },
       });
+
+      if (categoryDoc) {
+        filter.category = categoryDoc._id;
+      } else {
+        // If category does not exist, return no products
+        filter.category = null;
+      }
     }
-  }
-
-  if (category) {
-    const categoryDoc = await Category.findOne({
-      categoryName: {
-        $regex: `^${category.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
-        $options: "i",
-      },
-    });
-
-    if (categoryDoc) {
-      filter.category = categoryDoc._id;
-    } else {
-      // If category does not exist, return no products
-      filter.category = null;
+    if (fabric) {
+      filter.fabric = fabric;
     }
-  }
-  if (fabric) {
-    filter.fabric = fabric;
-  }
 
-  if (color) {
-    const escapedColor = color.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (color) {
+      const escapedColor = color.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    const linkedProducts = await Product.find({
-      parentProduct: { $ne: null },
-      "colorVariants.colorName": {
-        $regex: `^${escapedColor}$`,
-        $options: "i",
-      },
-    }).select("parentProduct");
-
-    const linkedParentIds = linkedProducts
-      .map((product) => product.parentProduct)
-      .filter(Boolean);
-
-    filter.$or = [
-      {
+      const linkedProducts = await Product.find({
+        parentProduct: { $ne: null },
         "colorVariants.colorName": {
           $regex: `^${escapedColor}$`,
           $options: "i",
         },
-      },
-      {
-        _id: { $in: linkedParentIds },
-      },
-    ];
-  }
-  if (occasion) {
-    filter.occasion = occasion;
-  }
+      }).select("parentProduct");
 
-  if (pattern) {
-    filter.pattern = pattern;
-  }
+      const linkedParentIds = linkedProducts
+        .map((product) => product.parentProduct)
+        .filter(Boolean);
 
-  if (size) {
-    filter.size = size;
-  }
+      filter.$or = [
+        {
+          "colorVariants.colorName": {
+            $regex: `^${escapedColor}$`,
+            $options: "i",
+          },
+        },
+        {
+          _id: { $in: linkedParentIds },
+        },
+      ];
+    }
+    if (occasion) {
+      filter.occasion = occasion;
+    }
 
-  if (featured !== undefined) {
-    filter.featured = featured === "true";
-  }
+    if (pattern) {
+      filter.pattern = pattern;
+    }
 
-  if (minPrice || maxPrice) {
-    filter.price = {};
+    if (size) {
+      filter.size = size;
+    }
 
-    if (minPrice) {
-      const parsedMinPrice = Number(minPrice);
+    if (featured !== undefined) {
+      filter.featured = featured === "true";
+    }
 
-      if (!Number.isNaN(parsedMinPrice)) {
-        filter.price.$gte = parsedMinPrice;
+    if (minPrice || maxPrice) {
+      filter.price = {};
+
+      if (minPrice) {
+        const parsedMinPrice = Number(minPrice);
+
+        if (!Number.isNaN(parsedMinPrice)) {
+          filter.price.$gte = parsedMinPrice;
+        }
+      }
+
+      if (maxPrice) {
+        const parsedMaxPrice = Number(maxPrice);
+
+        if (!Number.isNaN(parsedMaxPrice)) {
+          filter.price.$lte = parsedMaxPrice;
+        }
+      }
+
+      if (Object.keys(filter.price).length === 0) {
+        delete filter.price;
       }
     }
 
-    if (maxPrice) {
-      const parsedMaxPrice = Number(maxPrice);
+    console.log("REQ QUERY:", req.query);
+    console.log("FINAL FILTER:", JSON.stringify(filter, null, 2));
 
-      if (!Number.isNaN(parsedMaxPrice)) {
-        filter.price.$lte = parsedMaxPrice;
-      }
+    const products = await Product.find(filter)
+      .populate("category", "categoryName")
+      .sort(SORTS[sort] || { createdAt: -1 });
+    // Attach matching child color variants to the parent product
+    // for color-filtered Shop results.
+    if (color && products.length > 0) {
+      const parentIds = products.map((product) => product._id);
+
+      const escapedColor = color
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      const childProducts = await Product.find({
+        parentProduct: { $in: parentIds },
+        "colorVariants.colorName": {
+          $regex: `^${escapedColor}$`,
+          $options: "i",
+        },
+      }).select("parentProduct colorVariants");
+
+      products.forEach((product) => {
+        const matchingChildren = childProducts.filter(
+          (child) =>
+            child.parentProduct &&
+            child.parentProduct.toString() === product._id.toString()
+        );
+
+        const childVariants = matchingChildren.flatMap((child) =>
+          (child.colorVariants || []).filter(
+            (variant) =>
+              variant.colorName?.toLowerCase() === color.trim().toLowerCase()
+          )
+        );
+
+        if (childVariants.length > 0) {
+          product.colorVariants = [
+            ...(product.colorVariants || []),
+            ...childVariants,
+          ];
+        }
+      });
     }
+    console.log(
+      "SEARCH RESULTS:",
+      products.map((p) => ({
+        name: p.productName,
+        productType: p.productType,
+        fabric: p.fabric,
+        category: p.category?.categoryName,
+        colors: p.colorVariants?.map((v) => v.colorName),
+      }))
+    );
 
-    if (Object.keys(filter.price).length === 0) {
-      delete filter.price;
-    }
-  }
+    const today = new Date();
 
-  console.log("REQ QUERY:", req.query);
-  console.log("FINAL FILTER:", JSON.stringify(filter, null, 2));
-
-  const products = await Product.find(filter)
-    .populate("category", "categoryName")
-    .sort(SORTS[sort] || { createdAt: -1 });
-  // Attach matching child color variants to the parent product
-  // for color-filtered Shop results.
-  if (color && products.length > 0) {
-    const parentIds = products.map((product) => product._id);
-
-    const escapedColor = color
-      .trim()
-      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-    const childProducts = await Product.find({
-      parentProduct: { $in: parentIds },
-      "colorVariants.colorName": {
-        $regex: `^${escapedColor}$`,
-        $options: "i",
-      },
-    }).select("parentProduct colorVariants");
-
-    products.forEach((product) => {
-      const matchingChildren = childProducts.filter(
-        (child) =>
-          child.parentProduct &&
-          child.parentProduct.toString() === product._id.toString()
-      );
-
-      const childVariants = matchingChildren.flatMap((child) =>
-        (child.colorVariants || []).filter(
-          (variant) =>
-            variant.colorName?.toLowerCase() === color.trim().toLowerCase()
-        )
-      );
-
-      if (childVariants.length > 0) {
-        product.colorVariants = [
-          ...(product.colorVariants || []),
-          ...childVariants,
-        ];
-      }
-    });
-  }
-  console.log(
-    "SEARCH RESULTS:",
-    products.map((p) => ({
-      name: p.productName,
-      productType: p.productType,
-      fabric: p.fabric,
-      category: p.category?.categoryName,
-      colors: p.colorVariants?.map((v) => v.colorName),
-    }))
-  );
-
-  const today = new Date();
-
-  const discounts = await Discount.find({
-    active: true,
-    startDate: { $lte: today },
-    endDate: { $gte: today },
-  });
-
-  const updatedProducts = products.map((product) => {
-
-    let finalPrice = product.price;
-
-    let appliedDiscount = null;
-
-    const discount = discounts.find((d) => {
-
-      if (
-        d.applyTo === "Product" &&
-        d.product &&
-        d.product.toString() === product._id.toString()
-      ) {
-        return true;
-      }
-
-      if (
-        d.applyTo === "Category" &&
-        d.category &&
-        product.category &&
-        d.category.toString() === product.category._id.toString()
-      ) {
-        return true;
-      }
-
-      return false;
+    const discounts = await Discount.find({
+      active: true,
+      startDate: { $lte: today },
+      endDate: { $gte: today },
     });
 
-    if (discount) {
+    const updatedProducts = products.map((product) => {
 
-      if (discount.discountType === "Percentage") {
+      let finalPrice = product.price;
 
-        finalPrice =
-          product.price -
-          (product.price * discount.discountValue) / 100;
+      let appliedDiscount = null;
 
-      } else {
+      const discount = discounts.find((d) => {
 
-        finalPrice =
-          product.price - discount.discountValue;
+        if (
+          d.applyTo === "Product" &&
+          d.product &&
+          d.product.toString() === product._id.toString()
+        ) {
+          return true;
+        }
 
+        if (
+          d.applyTo === "Category" &&
+          d.category &&
+          product.category &&
+          d.category.toString() === product.category._id.toString()
+        ) {
+          return true;
+        }
+
+        return false;
+      });
+
+      if (discount) {
+
+        if (discount.discountType === "Percentage") {
+
+          finalPrice =
+            product.price -
+            (product.price * discount.discountValue) / 100;
+
+        } else {
+
+          finalPrice =
+            product.price - discount.discountValue;
+
+        }
+
+        if (finalPrice < 0) finalPrice = 0;
+
+        appliedDiscount = {
+          offerName: discount.offerName,
+          discountType: discount.discountType,
+          discountValue: discount.discountValue,
+        };
       }
 
-      if (finalPrice < 0) finalPrice = 0;
-
-      appliedDiscount = {
-        offerName: discount.offerName,
-        discountType: discount.discountType,
-        discountValue: discount.discountValue,
+      return {
+        ...product.toObject(),
+        originalPrice: product.price,
+        finalPrice,
+        discount: appliedDiscount,
       };
-    }
+    });
 
-    return {
-      ...product.toObject(),
-      originalPrice: product.price,
-      finalPrice,
-      discount: appliedDiscount,
-    };
-  });
+    res.json({
+      products: updatedProducts,
+      count: updatedProducts.length,
+    });
 
-  res.json({
-    products: updatedProducts,
-    count: updatedProducts.length,
-  });
+  } catch (error) {
+    console.error("LIST PRODUCTS ERROR:");
+    console.error(error);
+    console.error(error.stack);
+
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
 });
 
 // @route  GET /api/products/low-stock
