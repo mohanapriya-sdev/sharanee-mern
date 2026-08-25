@@ -279,6 +279,8 @@ export default function ProductDetail() {
 
   console.log("Images:", imgs);
   console.log("Images Count:", imgs.length);
+  console.log("Thumbs:", thumbs);
+  console.log("Thumbs Count:", thumbs.length);
 
 
   const hasSale = product.discount;

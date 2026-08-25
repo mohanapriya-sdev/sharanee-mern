@@ -10,7 +10,7 @@ const STATUSES = [
   "Shipped",
   "Out for Delivery",
   "Delivered",
-//  "Cancelled",
+  //  "Cancelled",
 ];
 
 const PAYMENT_STATUSES = [
@@ -317,19 +317,21 @@ export default function AdminOrders() {
       <div className="admin-toolbar">
         <h1>Orders</h1>
 
-        <div className="product-toolbar orders-toolbar">
-          <input
-            className="toolbar-input"
-            placeholder="Search Orders"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setCurrentPage(1);
-            }}
-          />
+        <div className="products-toolbar orders-toolbar">
 
-          <select
-            className="toolbar-select"
+          <div className="search-box">
+            <input
+              className="toolbar-input"
+              placeholder="Search Orders"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+
+          <select className="toolbar-select"
             value={dateFilter}
             onChange={(event) => {
               setDateFilter(event.target.value);
