@@ -158,14 +158,40 @@ export default function ProductDetail() {
 
       setSelectedFamily(family);
 
-      const familyVariants = allVariants.filter(
-        (variant) => variant.colorFamily === family
-      );
+      const grouped = allVariants.reduce((acc, color) => {
+        const family = color.colorFamily || "Others";
 
-      setFamilyColors(familyVariants);
+        if (!acc[family]) {
+          acc[family] = [];
+        }
+
+        acc[family].push(color);
+
+        return acc;
+      }, {});
+
+      setFamilyColors(grouped[family] || []);
       setBaseColorPage(0);
     }
   }, [product, linkedProducts, colorFromUrl]);
+
+
+
+  const [itemsPerPage, setItemsPerPage] = useState(
+    window.innerWidth <= 768 ? 2 : 5
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerPage(window.innerWidth <= 768 ? 2 : 5);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   if (loading) return <div className="spinner" />;
   if (!product) return <div className="empty"><h3>Product not found</h3><Link className="btn" to="/shop">Back to Shop</Link></div>;
 
@@ -200,7 +226,11 @@ export default function ProductDetail() {
   });
 
   const families = Object.keys(groupedColors);
-  const familiesPerPage = 5;
+
+
+
+  const familiesPerPage = itemsPerPage;
+
   const familyPages = Math.ceil(families.length / familiesPerPage);
 
   const visibleFamilies = families.slice(
@@ -208,7 +238,8 @@ export default function ProductDetail() {
     familyPage * familiesPerPage + familiesPerPage
   );
 
-  const baseColorsPerPage = 5;
+
+  const baseColorsPerPage = itemsPerPage;
 
   const baseColorPages = Math.ceil(
     (familyColors?.length || 0) / baseColorsPerPage
@@ -218,6 +249,9 @@ export default function ProductDetail() {
     baseColorPage * baseColorsPerPage,
     baseColorPage * baseColorsPerPage + baseColorsPerPage
   );
+  console.log("itemsPerPage:", itemsPerPage);
+  console.log("visibleFamilies:", visibleFamilies.length);
+  console.log("visibleBaseColors:", visibleBaseColors.length);
 
   console.log("Grouped Families:", Object.keys(groupedColors)); const variants = product.colorVariants || [];
 
@@ -242,6 +276,10 @@ export default function ProductDetail() {
         ];
 
   const thumbs = imgs.slice(0, 5);
+
+  console.log("Images:", imgs);
+  console.log("Images Count:", imgs.length);
+
 
   const hasSale = product.discount;
   const shown = product.finalPrice || product.price;

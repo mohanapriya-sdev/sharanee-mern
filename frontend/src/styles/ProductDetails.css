@@ -657,33 +657,20 @@ input[type="color"] {
     font-weight: bold;
 }
 
-.family-track {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    width: 700px;
-    /* fixed width for 5 items */
-    margin: 0 auto;
-}
-
+.family-track,
 .base-color-track {
     display: flex;
-    justify-content: center;
-    gap: 40px;
-    width: 700px;
-    /* fixed width for 5 items */
-    margin: 0 auto;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    width: 100%;
+    margin: 0;
 }
 
-.family-item {
-    width: 100px;
-    flex: 0 0 100px;
-    text-align: center;
-}
-
+.family-item,
 .base-color-slot {
-    width: 100px;
-    flex: 0 0 100px;
+    flex: 1;
+    min-width: 0;
     text-align: center;
 }
 
@@ -791,26 +778,62 @@ input[type="color"] {
     text-align: center;
 }
 
-/* ===========================
-   PRODUCT DETAIL MOBILE FINAL
-=========================== */
 
-@media (max-width:991px) {
+/* =========================
+   HOME CATEGORY - MOBILE
+========================= */
 
-    .family-carousel,
-    .base-color-carousel {
-        width: 100%;
-        overflow: hidden;
-        gap: 8px;
+@media (max-width: 768px) {
+
+    .cat-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
     }
+
+    .cat-rectangle-frame {
+        height: auto;
+        aspect-ratio: 3 / 4;
+    }
+
+    .cat-arch-frame {
+        height: auto;
+        aspect-ratio: 3 / 4;
+    }
+
+    .cat-rectangle-frame img,
+    .cat-arch-inner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+}
+
+/* =====================================
+   FINAL MOBILE OVERRIDE
+===================================== */
+
+@media (max-width:768px) {
+
+    /* ---------- Main Product Image ---------- */
+
+    .pdp-main img,
+    .product-main img {
+        width: 100% !important;
+        height: 420px !important;
+        object-fit: contain !important;
+        object-position: center;
+    }
+
+    /* ---------- Color Family ---------- */
 
     .family-track,
     .base-color-track {
-        width: 100% !important;
-        gap: 12px !important;
+        width: max-content !important;
+        display: flex !important;
+        gap: 16px !important;
+        overflow-x: auto !important;
         justify-content: flex-start !important;
-        overflow-x: auto;
-        padding-bottom: 8px;
         scrollbar-width: none;
     }
 
@@ -821,55 +844,101 @@ input[type="color"] {
 
     .family-item,
     .base-color-slot {
-        flex: 0 0 72px !important;
-        min-width: 72px !important;
-        width: 72px !important;
+        flex: 0 0 82px !important;
+        width: 82px !important;
+        min-width: 82px !important;
     }
 
     .family-btn {
+        width: 52px !important;
+        height: 52px !important;
+    }
+
+    .color-circle {
         width: 48px !important;
         height: 48px !important;
     }
 
-    .color-btn {
-        width: 72px !important;
-        min-width: 72px !important;
+    /* ---------- Size ---------- */
+
+    .size-options {
+        display: flex;
+        overflow-x: auto;
+        gap: 15px;
+        scrollbar-width: none;
     }
 
-    .color-circle {
-        width: 42px !important;
-        height: 42px !important;
+    .size-options::-webkit-scrollbar {
+        display: none;
     }
 
-    .family-name,
-    .color-btn span:last-child {
-        font-size: 12px !important;
-        white-space: normal;
-        text-align: center;
-    }
-
-    .pdp-meta {
-        overflow: hidden;
+    .size-btn {
+        flex: 0 0 60px;
     }
 
 }
 
-@media (max-width: 991px) {
+@media (max-width:768px) {
 
-    .family-track,
-    .base-color-track {
-        width: 100% !important;
-        margin: 0;
-        gap: 12px;
-        justify-content: flex-start;
-        overflow-x: auto;
+    .pdp {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px;
+    }
+
+}
+
+
+
+
+
+@media (max-width:768px) {
+
+    .pdp-main {
+        width: 100%;
+    }
+
+    .pdp-main img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+}
+
+
+@media (max-width:768px) {
+
+    .pdp-thumbs {
         display: flex;
+        flex-direction: row;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        justify-content: flex-start;
+        width: 100%;
+        padding-bottom: 8px;
         scrollbar-width: none;
     }
 
-    .family-track::-webkit-scrollbar,
-    .base-color-track::-webkit-scrollbar {
+    .pdp-thumbs::-webkit-scrollbar {
         display: none;
+    }
+
+    .pdp-thumb {
+        flex: 0 0 72px;
+        width: 72px;
+        height: 92px;
+        overflow: hidden;
+    }
+
+    .pdp-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+
     }
 }
 
@@ -972,32 +1041,177 @@ input[type="color"] {
     }
 }
 
-/* =========================
-   HOME CATEGORY - MOBILE
-========================= */
+/* ==========================================
+   PRODUCT GALLERY - MOBILE
+========================================== */
 
-@media (max-width: 768px) {
+@media (max-width:768px) {
 
-    .cat-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
+    .pdp-gallery {
+        display: grid !important;
+        grid-template-columns: 70px 1fr;
+        gap: 12px;
+        align-items: start;
     }
 
-    .cat-rectangle-frame {
-        height: auto;
-        aspect-ratio: 3 / 4;
+    .pdp-thumbs {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px;
+        overflow: hidden !important;
+        /* remove scroll */
+        height: auto !important;
     }
 
-    .cat-arch-frame {
-        height: auto;
-        aspect-ratio: 3 / 4;
+    .pdp-thumbs::-webkit-scrollbar {
+        display: none;
     }
 
-    .cat-rectangle-frame img,
-    .cat-arch-inner img {
+    .pdp-thumb {
+        width: 58px;
+        height: 58px;
+        flex: none;
+    }
+
+
+    .pdp-thumb img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+
+    .pdp-main {
+        width: 100%;
+    }
+
+    .pdp-main img {
+        width: 100%;
+        height: 370px;
+        object-fit: contain;
+    }
+
+}
+
+/* ===========================
+   FINAL COLOR FAMILY MOBILE
+=========================== */
+
+@media (max-width:768px) {
+
+    .family-carousel,
+    .base-color-carousel {
+        display: grid;
+        grid-template-columns: 40px 1fr 40px;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .family-name,
+    .color-btn span:last-child {
+        font-size: 11px;
+        line-height: 14px;
+        text-align: center;
+    }
+}
+
+@media (max-width:768px) {
+
+    .family-carousel,
+    .base-color-carousel {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .family-track,
+    .base-color-track {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        width: 100%;
+        gap: 8px;
+        justify-items: center;
+    }
+
+    .family-item,
+    .base-color-slot {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .family-btn {
+        width: 42px;
+        height: 42px;
+        margin: 0 auto;
+    }
+
+    .color-circle {
+        width: 38px;
+        height: 38px;
+        margin: 0 auto;
+    }
+
+    .family-name,
+    .color-btn span:last-child {
+        font-size: 11px;
+        line-height: 14px;
+    }
+
+    .family-nav,
+    .base-color-nav {
+        width: 34px;
+        height: 34px;
+    }
+}
+
+@media (max-width:768px) {
+
+    .size-options {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 4px 0;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .size-options::-webkit-scrollbar {
+        display: none;
+    }
+
+    .size-btn {
+        flex: 0 0 56px;
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
+        border-radius: 50%;
+    }
+
+}
+
+@media (max-width:768px) {
+
+    .size-options {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        width: 100%;
+        gap: 12px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .size-options::-webkit-scrollbar {
+        display: none;
+    }
+
+    .size-btn {
+        flex: 0 0 56px;
+        min-width: 56px;
+        width: 56px;
+        height: 56px;
     }
 
 }

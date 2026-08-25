@@ -105,18 +105,27 @@ video {
     display: none;
   }
 
-  /* free up vertical space */
   .announce-track {
     font-size: 0.68rem;
     letter-spacing: 0.1em;
   }
 
   .header .container {
-    height: 66px;
+    height: 82px;
+  }
+
+  .brand {
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .brand img {
-    height: 46px;
+    height: 72px !important;
+    width: auto !important;
+    max-width: none !important;
+    display: block;
   }
 
   .header-icons {
@@ -144,11 +153,13 @@ video {
 /* Very small phone */
 @media (max-width: 380px) {
   .header .container {
-    height: 60px;
+    height: 76px;
   }
 
   .brand img {
-    height: 40px;
+    height: 66px !important;
+    width: auto !important;
+    max-width: none !important;
   }
 
   .header-icons {
