@@ -2469,3 +2469,30 @@
     gap: 20px;
   }
 }
+
+/* =====================================
+   RECTANGLE CATEGORY FRAME (COLORS)
+===================================== */
+
+.cat-rectangle-frame {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  background: linear-gradient(160deg,
+      #c9a46a,
+      #e6cfa3 45%,
+      #c9a46a);
+}
+
+.cat-rectangle-frame img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  background: #fff;
+  transition: transform .5s ease;
+}
+
+.cat-tile:hover .cat-rectangle-frame img {
+  transform: scale(1.05);
+}

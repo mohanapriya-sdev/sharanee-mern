@@ -790,3 +790,184 @@ input[type="color"] {
     margin-top: 12px;
     text-align: center;
 }
+
+/* ===========================
+   PRODUCT DETAIL MOBILE FINAL
+=========================== */
+
+@media (max-width:991px) {
+
+    .family-carousel,
+    .base-color-carousel {
+        width: 100%;
+        overflow: hidden;
+        gap: 8px;
+    }
+
+    .family-track,
+    .base-color-track {
+        width: 100% !important;
+        gap: 12px !important;
+        justify-content: flex-start !important;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+    }
+
+    .family-track::-webkit-scrollbar,
+    .base-color-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .family-item,
+    .base-color-slot {
+        flex: 0 0 72px !important;
+        min-width: 72px !important;
+        width: 72px !important;
+    }
+
+    .family-btn {
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    .color-btn {
+        width: 72px !important;
+        min-width: 72px !important;
+    }
+
+    .color-circle {
+        width: 42px !important;
+        height: 42px !important;
+    }
+
+    .family-name,
+    .color-btn span:last-child {
+        font-size: 12px !important;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .pdp-meta {
+        overflow: hidden;
+    }
+
+}
+
+@media (max-width: 991px) {
+
+    .family-track,
+    .base-color-track {
+        width: 100% !important;
+        margin: 0;
+        gap: 12px;
+        justify-content: flex-start;
+        overflow-x: auto;
+        display: flex;
+        scrollbar-width: none;
+    }
+
+    .family-track::-webkit-scrollbar,
+    .base-color-track::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ==========================================
+   PRODUCT DETAIL - MOBILE OVERRIDES
+========================================== */
+
+@media (max-width: 991px) {
+
+    /* Gallery */
+    .pdp-gallery {
+        display: flex !important;
+        flex-direction: column !important;
+        position: static !important;
+        width: 100%;
+        gap: 16px;
+    }
+
+    .pdp-main {
+        width: 100% !important;
+    }
+
+    .pdp-main img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+
+    .pdp-thumbs {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto;
+        gap: 10px;
+        width: 100%;
+        scrollbar-width: none;
+    }
+
+    .pdp-thumbs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pdp-thumb {
+        flex: 0 0 70px;
+        width: 70px;
+        height: 90px;
+    }
+
+    /* Product meta */
+    .pdp-meta {
+        overflow: hidden;
+    }
+
+    /* Color Family */
+    .family-carousel,
+    .base-color-carousel {
+        width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+        gap: 12px;
+        scrollbar-width: none;
+    }
+
+    .family-carousel::-webkit-scrollbar,
+    .base-color-carousel::-webkit-scrollbar {
+        display: none;
+    }
+
+    .family-track,
+    .base-color-track {
+        width: auto !important;
+        margin: 0;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-start;
+    }
+
+    .family-item,
+    .base-color-slot {
+        flex: 0 0 72px;
+        min-width: 72px;
+    }
+
+    .family-btn {
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    .color-btn {
+        min-width: 72px !important;
+    }
+
+    .color-circle {
+        width: 42px !important;
+        height: 42px !important;
+    }
+
+    .family-name,
+    .color-btn span:last-child {
+        font-size: 12px;
+    }
+}
