@@ -2496,3 +2496,47 @@
 .cat-tile:hover .cat-rectangle-frame img {
   transform: scale(1.05);
 }
+
+/* ===========================
+   PRODUCT DETAILS MOBILE
+=========================== */
+
+@media (max-width: 768px) {
+
+  .pdp-gallery {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 16px;
+    position: static;
+  }
+
+  .pdp-thumbs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+
+  .pdp-thumb {
+    width: 100%;
+  }
+
+  .pdp-thumb img {
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .pdp-gallery .main {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+  }
+
+  .pdp-gallery .main img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+}
