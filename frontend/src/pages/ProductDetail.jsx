@@ -327,15 +327,10 @@ export default function ProductDetail() {
       <div className="container">
         <div className="pdp">
           {/* Gallery: main image + up to 5 thumbnails below */}
+
           <div className="pdp-gallery">
 
-            <div className="pdp-main">
-              <img
-                src={imgs[active]}
-                alt={product.productName}
-              />
-            </div>
-
+            {/* LEFT SIDE THUMBNAILS */}
             <div className="pdp-thumbs">
               {thumbs.map((img, index) => (
                 <button
@@ -349,6 +344,14 @@ export default function ProductDetail() {
                   />
                 </button>
               ))}
+            </div>
+
+            {/* RIGHT SIDE MAIN IMAGE */}
+            <div className="pdp-main">
+              <img
+                src={imgs[active]}
+                alt={product.productName}
+              />
             </div>
 
           </div>

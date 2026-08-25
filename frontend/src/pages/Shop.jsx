@@ -210,7 +210,14 @@ export default function Shop() {
   const fabricOpts = useMemo(() => opt(allProducts.map((p) => p.fabric)), [allProducts]);
   const tagOpts = useMemo(() => opt(allProducts.map((p) => p.occasion)), [allProducts]);
 
+  const ITEMS_PER_PAGE = 5;
+  const [colorPage, setColorPage] = useState(0);
 
+  const visibleColors = colorOpts.slice(
+    colorPage * ITEMS_PER_PAGE,
+    (colorPage + 1) * ITEMS_PER_PAGE
+  );
+  
   const catOpts = (
     group === "inskirts"
       ? inskirtCategories
