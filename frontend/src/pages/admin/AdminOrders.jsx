@@ -374,105 +374,117 @@ export default function AdminOrders() {
           </select>
         </div>
       </div>
-
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Order</th>
-            <th>Customer</th>
-            <th>Items</th>
-            <th>Amount</th>
-            <th>Payment</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {loading ? (
+      <div
+        className="orders-table-scroll"
+        style={{
+          overflowX: "auto",
+          width: "100%",
+        }}
+      >
+        <table
+          className="admin-table"
+          style={{
+            minWidth: "1200px",
+          }}
+        >
+          <thead>
             <tr>
-              <td
-                colSpan="7"
-                style={{ color: "var(--muted)" }}
-              >
-                Loading orders...
-              </td>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Amount</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ) : currentOrders.length > 0 ? (
-            currentOrders.map((order) => (
-              <tr key={order._id}>
-                <td>
-                  #{order._id.slice(-8).toUpperCase()}
+          </thead>
 
-                  <br />
-
-                  <small style={{ color: "var(--muted)" }}>
-                    {new Date(
-                      order.createdAt
-                    ).toLocaleDateString("en-IN")}
-                  </small>
-                </td>
-
-                <td>
-                  {order.user?.fullName || "—"}
-
-                  <br />
-
-                  <small style={{ color: "var(--muted)" }}>
-                    {order.user?.email || ""}
-                  </small>
-                </td>
-
-                <td>{order.items?.length || 0}</td>
-
-                <td>
-                  Rs.{" "}
-                  {Number(
-                    order.finalAmount ??
-                    order.totalAmount ??
-                    0
-                  ).toLocaleString("en-IN")}
-                </td>
-
-                <td>{order.paymentMethod || "—"}</td>
-
-                <td>
-                  <span
-                    className={`order-badge ${getOrderBadgeClass(
-                      order.orderStatus
-                    )}`}
-                    onClick={() => openOrder(order)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {order.orderStatus || "Placed"}
-                  </span>
-                </td>
-
-                <td>
-                  <button
-                    type="button"
-                    className="icon-btn view"
-                    title="View"
-                    onClick={() => openOrder(order)}
-                  >
-                    <FaEye size={15} />
-                  </button>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td
+                  colSpan="7"
+                  style={{ color: "var(--muted)" }}
+                >
+                  Loading orders...
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan="7"
-                style={{ color: "var(--muted)" }}
-              >
-                No orders found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            ) : currentOrders.length > 0 ? (
+              currentOrders.map((order) => (
+                <tr key={order._id}>
+                  <td>
+                    #{order._id.slice(-8).toUpperCase()}
 
+                    <br />
+
+                    <small style={{ color: "var(--muted)" }}>
+                      {new Date(
+                        order.createdAt
+                      ).toLocaleDateString("en-IN")}
+                    </small>
+                  </td>
+
+                  <td>
+                    {order.user?.fullName || "—"}
+
+                    <br />
+
+                    <small style={{ color: "var(--muted)" }}>
+                      {order.user?.email || ""}
+                    </small>
+                  </td>
+
+                  <td>{order.items?.length || 0}</td>
+
+                  <td>
+                    Rs.{" "}
+                    {Number(
+                      order.finalAmount ??
+                      order.totalAmount ??
+                      0
+                    ).toLocaleString("en-IN")}
+                  </td>
+
+                  <td>{order.paymentMethod || "—"}</td>
+
+                  <td>
+
+                    <span
+                      className={`order-badge ${getOrderBadgeClass(
+                        order.orderStatus
+                      )}`}
+                      onClick={() => openOrder(order)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {order.orderStatus || "Placed"}
+                    </span>
+                  </td>
+
+                  <td>
+                    <button
+                      type="button"
+                      className="icon-btn view"
+                      title="View"
+                      onClick={() => openOrder(order)}
+                    >
+                      <FaEye size={15} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="7"
+                  style={{ color: "var(--muted)" }}
+                >
+                  No orders found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       {
         !loading && filteredOrders.length > 0 && (
           <div className="pagination">

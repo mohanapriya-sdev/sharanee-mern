@@ -112,7 +112,8 @@
   min-width: 0;
   padding: 30px 34px;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: auto;
+  /* or simply remove this line */
 }
 
 .admin-main h1 {
@@ -502,11 +503,7 @@
     padding: 22px 16px;
   }
 
-  .admin-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+
 }
 
 /* ---- Admin pages: finer responsive ---- */
@@ -2823,4 +2820,129 @@
     min-width: 170px !important;
     white-space: nowrap;
   }
+}
+
+
+/* Mobile only */
+@media (max-width: 768px) {
+
+  .orders-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .orders-table-scroll .admin-table {
+    min-width: 1200px;
+    width: max-content;
+  }
+
+  .orders-table-scroll .admin-table th,
+  .orders-table-scroll .admin-table td {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width:768px) {
+
+  .orders-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .orders-table-scroll .admin-table {
+    display: table;
+    width: max-content;
+    min-width: 1200px;
+    white-space: nowrap;
+  }
+
+  .orders-table-scroll .admin-table th,
+  .orders-table-scroll .admin-table td {
+    white-space: nowrap;
+  }
+
+}
+
+.orders-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-table {
+  min-width: 1200px;
+  /* adjust if needed */
+  width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .08);
+}
+
+.admin-table th,
+.admin-table td {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .orders-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .orders-table-scroll .admin-table {
+    min-width: 1000px;
+    width: max-content;
+  }
+
+  .orders-table-scroll .admin-table th,
+  .orders-table-scroll .admin-table td {
+    white-space: nowrap;
+  }
+}
+
+/* Desktop */
+.admin-table {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Mobile only */
+@media (max-width:768px) {
+
+  .orders-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .orders-table-scroll .admin-table {
+    min-width: 1000px;
+    width: max-content;
+  }
+
+  .orders-table-scroll .admin-table th,
+  .orders-table-scroll .admin-table td {
+    white-space: nowrap;
+  }
+
+}
+
+.recent-orders-box .admin-table th,
+.recent-orders-box .admin-table td,
+.new-customers-box .admin-table th,
+.new-customers-box .admin-table td {
+
+  padding: 12px 10px !important;
+  font-size: 13px !important;
+
+  overflow: visible !important;
+  text-overflow: unset !important;
+  white-space: normal !important;
 }
