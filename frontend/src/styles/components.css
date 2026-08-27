@@ -2620,3 +2620,32 @@
   font-size: 22px;
   cursor: pointer;
 }
+
+@media (max-width:768px) {
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    justify-items: center;
+    align-items: start;
+  }
+
+  .cat-tile {
+    width: 100%;
+  }
+
+  .cat-rectangle-frame,
+  .cat-arch-frame {
+    width: 100%;
+    aspect-ratio: 0.75;
+  }
+
+  .cat-arch-inner img,
+  .cat-rectangle-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+}
