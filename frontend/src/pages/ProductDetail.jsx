@@ -177,6 +177,12 @@ export default function ProductDetail() {
 
 
 
+  const getItemsPerPage = () => {
+    if (window.innerWidth <= 576) return 3;      // Mobile
+    if (window.innerWidth <= 992) return 4;      // Tablet
+    return 5;                                    // Laptop/Desktop
+  };
+
   const [itemsPerPage, setItemsPerPage] = useState(
     window.innerWidth <= 768 ? 2 : 5
   );
@@ -191,7 +197,6 @@ export default function ProductDetail() {
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
   if (loading) return <div className="spinner" />;
   if (!product) return <div className="empty"><h3>Product not found</h3><Link className="btn" to="/shop">Back to Shop</Link></div>;
 

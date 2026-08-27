@@ -17,14 +17,10 @@ import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 
 
-
-
 export default function MyOrders() {
   const { user } = useAuth();
   const { refreshCart } = useCart();
   const toast = useToast();
-
-
   const [orders, setOrders] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("All Orders");
   const [loading, setLoading] = useState(true);

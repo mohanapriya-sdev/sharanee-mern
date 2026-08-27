@@ -49,3 +49,36 @@
     cursor: pointer;
     font-size: 14px;
 }
+
+/* Coupon Section */
+.coupon-row {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.coupon-row select {
+    flex: 1;
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid #d8c4a5;
+    border-radius: 10px;
+    background: #fff;
+    color: #3f2317;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.coupon-row select:focus {
+    border-color: #b8860b;
+    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.15);
+}
+
+.coupon-row .btn {
+    min-width: 100px;
+    height: 46px;
+    border-radius: 10px;
+}

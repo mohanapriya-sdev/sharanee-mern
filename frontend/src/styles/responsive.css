@@ -70,9 +70,15 @@ video {
 /* Tablet / mobile — burger nav (base app already switches at 940) */
 @media (max-width: 940px) {
 
-  /* enhance.css re-declares `.nav { display:flex }` after the base media
-     query, which kept the desktop nav visible on mobile. Because this file
-     loads last, these rules win and restore correct mobile behaviour. */
+  .acct-menu .acct-hi,
+  .acct-menu a,
+  .acct-menu button {
+    width: 100%;
+    display: block;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
   .nav {
     display: none !important;
   }
@@ -91,12 +97,6 @@ video {
     flex-wrap: nowrap;
     white-space: nowrap;
   }
-
-  /* Account dropdown must never spill off-screen */
-  .acct-menu {
-    width: min(240px, calc(100vw - 24px));
-    right: 0;
-  }
 }
 
 /* Small phone */
@@ -111,30 +111,67 @@ video {
   }
 
   .header .container {
-    height: 82px;
+    height: 78px;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 6px;
   }
 
   .brand {
-    width: auto;
+    min-width: 0;
+    max-width: 190px;
+    width: 100%;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .brand img {
+    height: 66px !important;
+    width: auto !important;
+    max-width: 185px !important;
+    object-fit: contain;
+    display: block;
+  }
+
+  .burger {
+    width: 32px;
+    height: 32px;
+    padding: 2px;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
   }
 
-  .brand img {
-    height: 72px !important;
-    width: auto !important;
-    max-width: none !important;
-    display: block;
+  .burger svg {
+    width: 25px !important;
+    height: 25px !important;
   }
 
   .header-icons {
-    gap: 13px;
+    gap: 7px;
+    min-width: 0;
+    flex-shrink: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .header-icons button,
+  .header-icons a {
+    width: 28px;
+    height: 28px;
+    padding: 1px;
+    flex: 0 0 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .header-icons svg {
-    width: 20px;
-    height: 20px;
+    width: 24px !important;
+    height: 24px !important;
+    stroke-width: 1.8;
   }
 
   .icon-count {
@@ -148,29 +185,67 @@ video {
   .drawer {
     width: 84%;
   }
+
+  .acct {
+    position: relative;
+  }
+
+  .acct-menu {
+    position: fixed !important;
+    top: 78px !important;
+    left: 50% !important;
+    right: auto !important;
+
+    transform: translateX(-50%) !important;
+
+    width: calc(100vw - 32px) !important;
+    max-width: 340px !important;
+
+    padding: 20px !important;
+
+    box-sizing: border-box;
+    overflow: hidden;
+
+    z-index: 9999;
+  }
 }
 
 /* Very small phone */
 @media (max-width: 380px) {
   .header .container {
-    height: 76px;
+    height: 74px;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 4px;
+  }
+
+  .brand {
+    max-width: 165px;
   }
 
   .brand img {
-    height: 66px !important;
-    width: auto !important;
-    max-width: none !important;
+    height: 62px !important;
+    max-width: 160px !important;
   }
 
   .header-icons {
-    gap: 10px;
+    gap: 5px;
   }
 
-  .acct-menu {
-    width: calc(100vw - 20px);
-    right: -6px;
+  .header-icons button,
+  .header-icons a {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
   }
+
+  .header-icons svg {
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+
 }
+
 
 /* ============================================================
    SHOP — CATEGORY CIRCLES

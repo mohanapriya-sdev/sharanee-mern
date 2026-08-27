@@ -313,11 +313,11 @@ export default function AdminOrders() {
   };
 
   return (
-    <>
+    <div className="orders-page">
       <div className="admin-toolbar">
         <h1>Orders</h1>
 
-        <div className="products-toolbar orders-toolbar">
+        <div className="orders-toolbar">
 
           <div className="search-box">
             <input
@@ -473,320 +473,324 @@ export default function AdminOrders() {
         </tbody>
       </table>
 
-      {!loading && filteredOrders.length > 0 && (
-        <div className="pagination">
-          <button
-            type="button"
-            disabled={safeCurrentPage === 1}
-            onClick={() =>
-              setCurrentPage((page) =>
-                Math.max(1, page - 1)
-              )
-            }
-          >
-            Previous
-          </button>
+      {
+        !loading && filteredOrders.length > 0 && (
+          <div className="pagination">
+            <button
+              type="button"
+              disabled={safeCurrentPage === 1}
+              onClick={() =>
+                setCurrentPage((page) =>
+                  Math.max(1, page - 1)
+                )
+              }
+            >
+              Previous
+            </button>
 
-          {Array.from(
-            { length: totalPages },
-            (_, index) => (
-              <button
-                type="button"
-                key={index + 1}
-                className={
-                  safeCurrentPage === index + 1
-                    ? "active-page"
-                    : ""
-                }
-                onClick={() =>
-                  setCurrentPage(index + 1)
-                }
-              >
-                {index + 1}
-              </button>
-            )
-          )}
-
-          <button
-            type="button"
-            disabled={safeCurrentPage === totalPages}
-            onClick={() =>
-              setCurrentPage((page) =>
-                Math.min(totalPages, page + 1)
-              )
-            }
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {showModal && selectedOrder && (
-        <div className="modal-back">
-          <div className="modal">
-            <h2>Order Details</h2>
-
-            <p className="order-number">
-              Order #{" "}
-              {selectedOrder._id
-                .slice(-8)
-                .toUpperCase()}
-            </p>
-
-            <div className="order-details-grid">
-              <div>
-                <label>Order ID</label>
-
-                <input
-                  readOnly
-                  value={`#${selectedOrder._id
-                    .slice(-8)
-                    .toUpperCase()}`}
-                />
-              </div>
-
-              <div>
-                <label>Customer</label>
-
-                <input
-                  readOnly
-                  value={
-                    selectedOrder.user?.fullName || ""
-                  }
-                />
-              </div>
-
-              <div>
-                <label>Email</label>
-
-                <input
-                  readOnly
-                  value={
-                    selectedOrder.user?.email || ""
-                  }
-                />
-              </div>
-
-              <div>
-                <label>Order Date</label>
-
-                <input
-                  readOnly
-                  value={new Date(
-                    selectedOrder.createdAt
-                  ).toLocaleDateString("en-IN")}
-                />
-              </div>
-
-              <div>
-                <label>Order Type</label>
-
-                <input
-                  readOnly
-                  value={
-                    selectedOrder.paymentMethod || ""
-                  }
-                />
-              </div>
-
-              <div>
-                <label>Payment Status</label>
-
-                <select
-                  value={
-                    selectedOrder.paymentStatus ||
-                    "Pending"
-                  }
-                  onChange={(event) =>
-                    updateSelectedOrderField(
-                      "paymentStatus",
-                      event.target.value
-                    )
-                  }
-                >
-                  {PAYMENT_STATUSES.map(
-                    (paymentStatus) => (
-                      <option
-                        key={paymentStatus}
-                        value={paymentStatus}
-                      >
-                        {paymentStatus}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
-
-              <div>
-                <label>Delivery Date</label>
-
-                <input
-                  type="date"
-                  value={
-                    selectedOrder.deliveryDate
-                      ? String(
-                        selectedOrder.deliveryDate
-                      ).substring(0, 10)
+            {Array.from(
+              { length: totalPages },
+              (_, index) => (
+                <button
+                  type="button"
+                  key={index + 1}
+                  className={
+                    safeCurrentPage === index + 1
+                      ? "active-page"
                       : ""
                   }
-                  onChange={(event) =>
-                    updateSelectedOrderField(
-                      "deliveryDate",
-                      event.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label>Tracking ID</label>
-
-                <input
-                  type="text"
-                  value={selectedOrder.trackingId || "Not assigned"}
-                  readOnly
-                />
-              </div>
-
-              <div>
-                <label>Courier Partner</label>
-
-                <input
-                  type="text"
-                  value={selectedOrder.courierName || "Not assigned"}
-                  readOnly
-                />
-              </div>
-
-              <div>
-                <label>Total Amount</label>
-
-                <input
-                  readOnly
-                  value={`₹ ${Number(
-                    selectedOrder.finalAmount ??
-                    selectedOrder.totalAmount ??
-                    0
-                  ).toLocaleString("en-IN")}`}
-                />
-              </div>
-
-              <div>
-                <label>Status</label>
-
-                <select
-                  value={
-                    selectedOrder.orderStatus ||
-                    "Placed"
-                  }
-                  onChange={(event) =>
-                    updateSelectedOrderField(
-                      "orderStatus",
-                      event.target.value
-                    )
+                  onClick={() =>
+                    setCurrentPage(index + 1)
                   }
                 >
-                  {STATUSES.map((status) => (
-                    <option
-                      key={status}
-                      value={status}
-                    >
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  {index + 1}
+                </button>
+              )
+            )}
 
-            <h3
-              style={{
-                marginTop: "18px",
-                marginBottom: "12px",
-                color: "#4b2615",
-                fontFamily: "inherit",
-                fontSize: "18px",
-                fontWeight: "600"
-              }}
+            <button
+              type="button"
+              disabled={safeCurrentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((page) =>
+                  Math.min(totalPages, page + 1)
+                )
+              }
             >
-              Ordered Products
-            </h3>
+              Next
+            </button>
+          </div>
+        )
+      }
 
-            {selectedOrder.items?.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "12px 0",
-                  borderBottom: "1px solid #eee",
-                }}
-              >
+      {
+        showModal && selectedOrder && (
+          <div className="modal-back">
+            <div className="modal">
+              <h2>Order Details</h2>
+
+              <p className="order-number">
+                Order #{" "}
+                {selectedOrder._id
+                  .slice(-8)
+                  .toUpperCase()}
+              </p>
+
+              <div className="order-details-grid">
                 <div>
-                  <b>{item.product?.productName}</b>
+                  <label>Order ID</label>
 
-                  <div style={{ marginTop: 6 }}>
-                    Qty: {item.quantity}
-                  </div>
-
-                  {item.selectedColor && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        marginTop: 6,
-                      }}
-                    >
-                      <span>Color:</span>
-
-                      <span
-                        style={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: "50%",
-                          display: "inline-block",
-                          backgroundColor:
-                            item.selectedColor === "Rust"
-                              ? "#B7410E"
-                              : item.selectedColor,
-                          border: "1px solid #ccc",
-                        }}
-                      />
-
-                      {item.selectedColor}
-                    </div>
-                  )}
+                  <input
+                    readOnly
+                    value={`#${selectedOrder._id
+                      .slice(-8)
+                      .toUpperCase()}`}
+                  />
                 </div>
 
-                <b>
-                  ₹{item.price?.toLocaleString("en-IN")}
-                </b>
+                <div>
+                  <label>Customer</label>
+
+                  <input
+                    readOnly
+                    value={
+                      selectedOrder.user?.fullName || ""
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>Email</label>
+
+                  <input
+                    readOnly
+                    value={
+                      selectedOrder.user?.email || ""
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>Order Date</label>
+
+                  <input
+                    readOnly
+                    value={new Date(
+                      selectedOrder.createdAt
+                    ).toLocaleDateString("en-IN")}
+                  />
+                </div>
+
+                <div>
+                  <label>Order Type</label>
+
+                  <input
+                    readOnly
+                    value={
+                      selectedOrder.paymentMethod || ""
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>Payment Status</label>
+
+                  <select
+                    value={
+                      selectedOrder.paymentStatus ||
+                      "Pending"
+                    }
+                    onChange={(event) =>
+                      updateSelectedOrderField(
+                        "paymentStatus",
+                        event.target.value
+                      )
+                    }
+                  >
+                    {PAYMENT_STATUSES.map(
+                      (paymentStatus) => (
+                        <option
+                          key={paymentStatus}
+                          value={paymentStatus}
+                        >
+                          {paymentStatus}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label>Delivery Date</label>
+
+                  <input
+                    type="date"
+                    value={
+                      selectedOrder.deliveryDate
+                        ? String(
+                          selectedOrder.deliveryDate
+                        ).substring(0, 10)
+                        : ""
+                    }
+                    onChange={(event) =>
+                      updateSelectedOrderField(
+                        "deliveryDate",
+                        event.target.value
+                      )
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>Tracking ID</label>
+
+                  <input
+                    type="text"
+                    value={selectedOrder.trackingId || "Not assigned"}
+                    readOnly
+                  />
+                </div>
+
+                <div>
+                  <label>Courier Partner</label>
+
+                  <input
+                    type="text"
+                    value={selectedOrder.courierName || "Not assigned"}
+                    readOnly
+                  />
+                </div>
+
+                <div>
+                  <label>Total Amount</label>
+
+                  <input
+                    readOnly
+                    value={`₹ ${Number(
+                      selectedOrder.finalAmount ??
+                      selectedOrder.totalAmount ??
+                      0
+                    ).toLocaleString("en-IN")}`}
+                  />
+                </div>
+
+                <div>
+                  <label>Status</label>
+
+                  <select
+                    value={
+                      selectedOrder.orderStatus ||
+                      "Placed"
+                    }
+                    onChange={(event) =>
+                      updateSelectedOrderField(
+                        "orderStatus",
+                        event.target.value
+                      )
+                    }
+                  >
+                    {STATUSES.map((status) => (
+                      <option
+                        key={status}
+                        value={status}
+                      >
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            ))}
 
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn"
-                disabled={saving}
-                onClick={saveOrderChanges}
+              <h3
+                style={{
+                  marginTop: "18px",
+                  marginBottom: "12px",
+                  color: "#4b2615",
+                  fontFamily: "inherit",
+                  fontSize: "18px",
+                  fontWeight: "600"
+                }}
               >
-                {saving ? "Saving..." : "Save"}
-              </button>
+                Ordered Products
+              </h3>
 
-              <button
-                type="button"
-                className="mini-btn"
-                disabled={saving}
-                onClick={closeOrder}
-              >
-                Cancel
-              </button>
+              {selectedOrder.items?.map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderBottom: "1px solid #eee",
+                  }}
+                >
+                  <div>
+                    <b>{item.product?.productName}</b>
+
+                    <div style={{ marginTop: 6 }}>
+                      Qty: {item.quantity}
+                    </div>
+
+                    {item.selectedColor && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginTop: 6,
+                        }}
+                      >
+                        <span>Color:</span>
+
+                        <span
+                          style={{
+                            width: 14,
+                            height: 14,
+                            borderRadius: "50%",
+                            display: "inline-block",
+                            backgroundColor:
+                              item.selectedColor === "Rust"
+                                ? "#B7410E"
+                                : item.selectedColor,
+                            border: "1px solid #ccc",
+                          }}
+                        />
+
+                        {item.selectedColor}
+                      </div>
+                    )}
+                  </div>
+
+                  <b>
+                    ₹{item.price?.toLocaleString("en-IN")}
+                  </b>
+                </div>
+              ))}
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={saving}
+                  onClick={saveOrderChanges}
+                >
+                  {saving ? "Saving..." : "Save"}
+                </button>
+
+                <button
+                  type="button"
+                  className="mini-btn"
+                  disabled={saving}
+                  onClick={closeOrder}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </>
+        )
+      }
+    </div >
   );
 }

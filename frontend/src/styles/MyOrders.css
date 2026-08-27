@@ -1054,3 +1054,97 @@
     text-decoration: none;
     transform: none;
 }
+
+@media (max-width: 600px) {
+
+    .my-orders-page .order-item.premium-product-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        margin: 16px;
+        padding: 18px 0;
+    }
+
+    .my-orders-page .premium-product-card>img {
+        width: 95px;
+        height: 125px;
+        flex-shrink: 0;
+        object-fit: cover;
+    }
+
+    .my-orders-page .premium-product-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .my-orders-page .premium-product-title {
+        font-size: 16px;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    .my-orders-page .premium-rating {
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+
+    .my-orders-page .product-details-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        max-width: 100%;
+    }
+
+    .my-orders-page .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .my-orders-page .detail-label {
+        min-width: auto;
+    }
+
+    .my-orders-page .detail-value,
+    .my-orders-page .color-value {
+        text-align: right;
+    }
+
+    .my-orders-page .premium-stock {
+        margin-top: 12px;
+        font-size: 14px;
+    }
+
+}
+
+.my-orders-page .order-info-sections {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin: 18px;
+}
+
+.my-orders-page .order-info-box {
+    height: auto;
+    min-height: auto;
+    padding: 18px;
+}
+
+.my-orders-page .order-info-content {
+    overflow: visible;
+}
+
+@media (max-width:600px) {
+
+    .my-orders-page .info-row strong {
+        font-size: 15px;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+
+    .my-orders-page .help-link,
+    .my-orders-page .view-return-btn {
+        font-size: 15px;
+    }
+
+}
