@@ -106,10 +106,7 @@ export default function Footer() {
           <div className="foot-col">
             <h4>Need Help?</h4>
             <Link to="/contact">Contact Us</Link>
-            <a href="#">Book an Appointment</a>
-            <a href="#">Shipping</a>
-            <a href="#">FAQ's</a>
-            <a href="#">Stock Locator</a>
+
           </div>
 
           <div className="foot-col">
@@ -121,7 +118,15 @@ export default function Footer() {
         </div>
       </div>
 
-      © {new Date().getFullYear()} Sharanee — Saree Inskirt and Pins.All Rights Reserved.
+      <div className="footer-bottom">
+        <div className="footer-divider">
+          <span>✦</span>
+        </div>
+
+        <p>
+          © {new Date().getFullYear()} Sharanee — Saree Inskirt and Pins. All Rights Reserved.
+        </p>
+      </div>
     </footer >
   );
 }
