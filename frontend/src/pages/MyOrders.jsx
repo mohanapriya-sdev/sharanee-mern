@@ -32,6 +32,8 @@ export default function MyOrders() {
   const [reviewingItem, setReviewingItem] = useState(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [reviewImages, setReviewImages] = useState([]);
+  const [reviewPreviews, setReviewPreviews] = useState([]);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
@@ -43,6 +45,7 @@ export default function MyOrders() {
   const [wishlistProductIds, setWishlistProductIds] = useState([]);
   const [myComplaints, setMyComplaints] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [editingReviewId, setEditingReviewId] = useState(null);
 
   const load = () => {
     if (!user?.id) {
@@ -288,12 +291,22 @@ export default function MyOrders() {
     try {
       setSubmittingReview(true);
 
-      await reviewApi.add({
-        user: user.id,
-        product: reviewingItem.productId,
-        rating: reviewRating,
-        review: reviewText.trim(),
+      const formData = new FormData();
+
+      formData.append("user", user.id);
+      formData.append("product", reviewingItem.productId);
+      formData.append("rating", reviewRating);
+      formData.append("review", reviewText.trim());
+
+      reviewImages.forEach((img) => {
+        formData.append("images", img);
       });
+
+      if (editingReviewId) {
+        await reviewApi.update(editingReviewId, formData);
+      } else {
+        await reviewApi.add(formData);
+      }
 
       toast.success("Thank you! Your review was submitted successfully.");
 
@@ -754,26 +767,50 @@ export default function MyOrders() {
                     <button
                       type="button"
                       className="btn btn-outline"
-                      onClick={() => {
+                      onClick={async () => {
                         const firstProduct = order.items?.find(
                           (item) => item.product?._id
                         );
 
-                        if (!firstProduct) {
-                          toast.error("Product details not found.");
-                          return;
+                        if (!firstProduct) return;
+
+                        try {
+                          const res = await reviewApi.forProduct(firstProduct.product._id);
+
+                          const myReview = res.data.reviews.find(
+                            (r) => r.user._id === user.id
+                          );
+
+                          setReviewingItem({
+                            orderId: order._id,
+                            productId: firstProduct.product._id,
+                            productName: firstProduct.product.productName,
+                          });
+
+                          if (myReview) {
+                            setEditingReviewId(myReview._id);
+                            setReviewRating(myReview.rating);
+                            setReviewText(myReview.review || "");
+                            setReviewPreviews(
+                              (myReview.images || []).map((img) => imageUrl(img))
+                            );
+                          } else {
+                            setEditingReviewId(null);
+                            setReviewRating(5);
+                            setReviewText("");
+                            setReviewImages([]);
+                            setReviewPreviews([]);
+                          }
+                        } catch (error) {
+                          console.log(error);
+                          console.log(error.response);
+                          console.log(error.response?.data);
+
+                          toast.error("Could not load review.");
                         }
-
-                        setReviewingItem({
-                          orderId: order._id,
-                          productId: firstProduct.product._id,
-                          productName: firstProduct.product.productName,
-                        });
-
-                        setReviewRating(5);
-                        setReviewText("");
                       }}
                     >
+
                       Write Review
                     </button>
                   )}
@@ -1171,7 +1208,7 @@ export default function MyOrders() {
 
               <div className="return-modal-header">
                 <div>
-                  <h2>Write Review</h2>
+                  <h2>{editingReviewId ? "Edit Review" : "Write Review"}</h2>
                   <p>{reviewingItem.productName}</p>
                 </div>
 
@@ -1232,6 +1269,36 @@ export default function MyOrders() {
                 />
               </div>
 
+              <div className="return-form-group">
+                <label>Upload Images (Optional)</label>
+
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="review-file-input"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setReviewImages(files);
+                    setReviewPreviews(
+                      files.map((file) => URL.createObjectURL(file))
+                    );
+                  }}
+                />
+                {reviewPreviews.length > 0 && (
+                  <div className="review-preview">
+                    {reviewPreviews.map((img, i) => (
+                      <img
+                        key={i}
+                        src={img}
+                        alt=""
+                        className="review-preview-image"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="return-modal-actions">
                 <button
                   type="button"
@@ -1253,8 +1320,10 @@ export default function MyOrders() {
                   onClick={submitReview}
                 >
                   {submittingReview
-                    ? "Submitting..."
-                    : "Submit Review"}
+                    ? "Saving..."
+                    : editingReviewId
+                      ? "Update Review"
+                      : "Submit Review"}
                 </button>
               </div>
 

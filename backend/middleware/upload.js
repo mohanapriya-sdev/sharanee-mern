@@ -30,4 +30,7 @@ const makeUploader = (folder) => {
 module.exports = {
   productUpload: makeUploader("products"),
   categoryUpload: makeUploader("categories"),
+
+  // Review Images
+  reviewUpload: makeUploader("reviews"),
 };

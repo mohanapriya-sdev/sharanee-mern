@@ -26,6 +26,12 @@ const reviewSchema = new mongoose.Schema(
       default: "",
     },
 
+    images: [
+      {
+        type: String,
+      },
+    ],
+
     status: {
       type: String,
       enum: ["Pending", "Approved", "Hidden"],

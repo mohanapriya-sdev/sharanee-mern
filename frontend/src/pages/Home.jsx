@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { productApi, categoryApi } from "../api/endpoints";
+import { productApi, categoryApi, reviewApi } from "../api/endpoints";
 import { imageUrl } from "../api/client";
 import ProductCard from "../components/ProductCard";
 import { Icon } from "../components/Icons";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+
+import "swiper/css";
+import "swiper/css/pagination";
+
 
 const HERO = "/images/inskirts-pins-hero.png";
 const CAT_FALLBACK = [
@@ -56,29 +62,28 @@ const SPLIT1 = "/images/majestic-inskirts.png";
 
 const SPLIT2 = "/images/pins-banner.png";
 
-const TESTIMONIALS = [
-  { name: "Sophia Williams", date: "March 11, 2026", text: "Beautiful floral embroidered inskirt with a soft pastel color that gives a very elegant look. The finish and flow feel truly premium." },
-  { name: "Grace Turner", date: "December 11, 2025", text: "Absolutely stunning drape with vibrant color and elegant flare. The stitching and fall give it a very royal feel." },
-  { name: "Charlotte Davis", date: "September 21, 2025", text: "This piece is absolutely gorgeous with its rich color and refined detailing. It adds a modern, stylish touch." },
-];
+
 
 export default function Home() {
   const [featured, setFeatured] = useState([]);
   const [latest, setLatest] = useState([]);
   const [cats, setCats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [testimonials, setTestimonials] = useState([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const [f, l, c] = await Promise.all([
+        const [f, l, c, r] = await Promise.all([
           productApi.list({ featured: "true" }),
           productApi.list({ sort: "newest" }),
           categoryApi.list(),
+          reviewApi.home(),
         ]);
         setFeatured((f.data.products || []).slice(0, 4));
         setLatest((l.data.products || []).slice(0, 8));
         setCats(c.data.categories || []);
+        setTestimonials(r.data.reviews || []);
       } catch {
         /* backend offline — sections gracefully empty */
       } finally {
@@ -350,19 +355,56 @@ export default function Home() {
             <h2>What Our Customers Say</h2>
             <p>Experiences shared by those who chose timeless craftsmanship and refined style.</p>
           </div>
-          <div className="testi-grid">
-            {TESTIMONIALS.map((t, i) => (
-              <div className="testi" key={i}>
-                <div className="testi-top">
-                  <div className="testi-name">{t.name}<small>{t.date}</small></div>
-                  <div className="testi-stars">
-                    {[...Array(5)].map((_, s) => <Icon.Star key={s} fill />)}
+          <Swiper
+            modules={[Pagination]}
+            pagination={{
+              clickable: true,
+            }}
+            loop={false}
+            spaceBetween={24}
+            slidesPerView={3}
+            slidesPerGroup={3}
+            breakpoints={{
+              0: {
+                slidesPerView: 1,
+                slidesPerGroup: 1,
+              },
+              768: {
+                slidesPerView: 2,
+                slidesPerGroup: 2,
+              },
+              1200: {
+                slidesPerView: 3,
+                slidesPerGroup: 3,
+              },
+            }}
+          >
+            {testimonials.map((t, i) => (
+              <SwiperSlide key={i}>
+                <div className="testi">
+                  <div className="testi-top">
+                    <div className="testi-name">
+                      {t.user?.fullName}
+                      <small>
+                        {new Date(t.createdAt).toLocaleDateString()}
+                      </small>
+                    </div>
+
+                    <div className="testi-stars">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Icon.Star
+                          key={star}
+                          fill={star <= t.rating}
+                        />
+                      ))}
+                    </div>
                   </div>
+
+                  <p>"{t.review}"</p>
                 </div>
-                <p>"{t.text}"</p>
-              </div>
+              </SwiperSlide>
             ))}
-          </div>
+          </Swiper>
         </div>
       </section>
     </>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { productApi, categoryApi } from "../api/endpoints";
 import { imageUrl } from "../api/client";
 import ProductCard from "../components/ProductCard";
@@ -34,6 +34,7 @@ const AVAILABILITY = [
 
 export default function Shop() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [cats, setCats] = useState([]);
@@ -217,7 +218,7 @@ export default function Shop() {
     colorPage * ITEMS_PER_PAGE,
     (colorPage + 1) * ITEMS_PER_PAGE
   );
-  
+
   const catOpts = (
     group === "inskirts"
       ? inskirtCategories
@@ -300,18 +301,21 @@ export default function Shop() {
                     key={i}
                     className={`circle ${isActive ? "active" : ""}`}
                     onClick={() => {
-                      const next = new URLSearchParams(params);
+                      const selectedProduct = allProducts.find((product) =>
+                        product.colorVariants?.some(
+                          (variant) =>
+                            variant.colorName?.toLowerCase() === c.name.toLowerCase()
+                        )
+                      );
 
-                      if (isActive) {
-                        next.delete("color");
+                      if (selectedProduct?._id) {
+                        window.location.href =
+                          `/product/${selectedProduct._id}?color=${encodeURIComponent(c.name)}`;
                       } else {
-                        next.set("color", c.name);
+                        console.log(`No product found for color: ${c.name}`);
                       }
-
-                      next.delete("category");
-
-                      setParams(next);
                     }}
+
                   >
                     <span className="circle-img">
                       <img src={c.img} alt={`${c.name} Inskirt`} />

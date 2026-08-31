@@ -36,6 +36,8 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [reviewImages, setReviewImages] = useState([]);
+  const [reviewPreviews, setReviewPreviews] = useState([]);
   const [tab, setTab] = useState("desc");
   const [canReview, setCanReview] = useState(false);
   const loadReviews = () => reviewApi.forProduct(id).then((r) => setReviews(r.data.reviews || [])).catch(() => { });
@@ -353,7 +355,18 @@ export default function ProductDetail() {
     e.preventDefault();
     if (!guard()) return;
     try {
-      await reviewApi.add({ user: user.id, product: product._id, rating, review: reviewText });
+      const formData = new FormData();
+
+      formData.append("user", user.id);
+      formData.append("product", product._id);
+      formData.append("rating", rating);
+      formData.append("review", reviewText);
+
+      reviewImages.forEach((img) => {
+        formData.append("images", img);
+      });
+
+      await reviewApi.add(formData);
       toast.success("Thank you for your review.");
       setReviewText(""); loadReviews();
     } catch (err) { toast.error(err.response?.data?.message || "Could not add review."); }
@@ -763,6 +776,20 @@ export default function ProductDetail() {
 
                   </p>
 
+                  {r.images?.length > 0 && (
+                    <div className="review-images">
+                      {r.images.map((img, index) => (
+                        <img
+                          key={index}
+                          src={imageUrl(img)}
+                          alt="Review"
+                          className="review-image"
+                        />
+                      ))}
+                    </div>
+                  )}
+
+
                   <small>
 
                     {new Date(r.createdAt).toLocaleDateString()}
@@ -772,6 +799,8 @@ export default function ProductDetail() {
                 </div>
 
               ))}
+
+           
 
               {canReview ? (
                 <div className="write-review">
@@ -797,12 +826,52 @@ export default function ProductDetail() {
                       <label>Your Review</label>
 
                       <textarea
-                        rows="3"
+                        rows={5}
                         value={reviewText}
                         onChange={(e) => setReviewText(e.target.value)}
-                        placeholder="Describe quality, fabric, colour and your experience..."
+                        placeholder="Share your experience with this product..."
                         required
                       />
+                    </div>
+                    <div className="field">
+                      <label>Upload Images (Optional)</label>
+
+                      <input
+                        id="reviewImages"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+
+                          setReviewImages(files);
+
+                          setReviewPreviews(
+                            files.map(file => URL.createObjectURL(file))
+                          );
+                        }}
+                        style={{
+                          display: "block",
+                          opacity: 1,
+                          visibility: "visible",
+                          border: "1px solid #ccc",
+                          padding: "10px",
+                          width: "100%"
+                        }}
+                      />
+
+                      {reviewPreviews.length > 0 && (
+                        <div className="review-preview">
+                          {reviewPreviews.map((img, i) => (
+                            <img
+                              key={i}
+                              src={img}
+                              alt=""
+                              className="review-preview-image"
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <button className="btn btn-gold">

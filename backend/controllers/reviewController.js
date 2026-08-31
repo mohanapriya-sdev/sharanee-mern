@@ -17,6 +17,8 @@ const syncProductRating = async (productId) => {
 const addReview = asyncHandler(async (req, res) => {
   const { user, product, rating, review } = req.body;
 
+  const images = req.files?.map((file) => file.path) || [];
+
   if (!user || !product || !rating) {
     return res.status(400).json({
       message: "user, product and rating are required",
@@ -48,11 +50,13 @@ const addReview = asyncHandler(async (req, res) => {
     });
   }
 
+
   const doc = await Review.create({
     user,
     product,
     rating,
     review,
+    images,
   });
 
   await syncProductRating(product);
@@ -75,15 +79,38 @@ const reviewsForProduct = asyncHandler(async (req, res) => {
 
 // @route  PUT /api/reviews/:id
 const updateReview = asyncHandler(async (req, res) => {
-  const { rating, review } = req.body;
-  const doc = await Review.findByIdAndUpdate(
-    req.params.id,
-    { rating, review },
-    { new: true, runValidators: true }
-  );
-  if (!doc) return res.status(404).json({ message: "Review not found" });
-  await syncProductRating(doc.product);
-  res.json({ review: doc });
+  const review = await Review.findById(req.params.id);
+
+  if (!review) {
+    return res.status(404).json({
+      message: "Review not found",
+    });
+  }
+
+  // Only the review owner can edit
+  if (review.user.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      message: "Not authorized to edit this review",
+    });
+  }
+
+  review.rating = req.body.rating || review.rating;
+  review.review = req.body.review || review.review;
+
+  if (req.files && req.files.length > 0) {
+    review.images = req.files.map((file) => file.path);
+  }
+
+  await review.save();
+
+  await syncProductRating(review.product);
+
+  await review.populate("user", "fullName");
+
+  res.json({
+    success: true,
+    review,
+  });
 });
 
 // @route  DELETE /api/reviews/:id
@@ -124,6 +151,25 @@ const getAllReviews = asyncHandler(async (req, res) => {
   });
 });
 
+
+// @route   GET /api/reviews/home
+// @desc    Get approved reviews for Home Page
+// @access  Public
+
+const getHomeReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.find({ status: "Approved" })
+    .populate("user", "fullName")
+    .populate("product", "productName")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: reviews.length,
+    reviews,
+  });
+});
+
+
 // @route PUT /api/reviews/:id/status
 // Admin - Approve / Hide review
 const updateReviewStatus = asyncHandler(async (req, res) => {
@@ -155,5 +201,6 @@ module.exports = {
   removeReview,
   canReview,
   getAllReviews,
+  getHomeReviews,
   updateReviewStatus,
 };

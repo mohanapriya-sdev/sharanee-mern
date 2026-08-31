@@ -1318,3 +1318,55 @@ input[type="color"] {
     }
 
 }
+
+.review-images {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.review-image {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.review-preview {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.review-preview-image {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+.review-form input[type="file"] {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.review-form input[type="file"] {
+    display: block !important;
+    width: 100% !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: static !important;
+    margin: 12px 0;
+    padding: 10px;
+    border: 1px solid #d6a64c;
+    border-radius: 10px;
+    background: #fff;
+}

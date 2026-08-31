@@ -167,26 +167,42 @@ export const orderApi = {
 // ---------- Reviews ----------
 export const reviewApi = {
   // Customer
-  add: (data) => api.post("/reviews", data),
-
+  add: (formData) =>
+    api.post("/reviews", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+  list: (productId) =>
+    api.get(`/reviews/${productId}`),
   forProduct: (productId) =>
     api.get(`/reviews/${productId}`),
 
   canReview: (productId) =>
     api.get(`/reviews/can-review/${productId}`),
 
-  update: (id, data) =>
-    api.put(`/reviews/${id}`, data),
+  update: (id, formData) =>
+    api.put(`/reviews/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 
   remove: (id) =>
     api.delete(`/reviews/${id}`),
 
+  // Home Page Reviews
+  home: () =>
+    api.get("/reviews/home"),
+
   // Admin
-  getAll: () => api.get("/reviews"),
+  getAll: () =>
+    api.get("/reviews"),
 
   updateStatus: (id, status) =>
     api.put(`/reviews/${id}/status`, { status }),
 };
+
 
 // ---------- Coupons ----------
 export const couponApi = {

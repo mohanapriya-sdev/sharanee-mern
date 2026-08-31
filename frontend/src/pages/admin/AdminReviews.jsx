@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { reviewApi } from "../../api/endpoints";
+import { imageUrl } from "../../api/client";
 import "../../styles/AdminReviews.css";
 import {
     FaStar,
@@ -15,6 +16,7 @@ export default function AdminReviews() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("All");
+
 
     const loadReviews = async () => {
         try {
@@ -188,6 +190,7 @@ export default function AdminReviews() {
                                 <th>Customer</th>
                                 <th>Rating</th>
                                 <th>Review</th>
+                                <th>Images</th>
                                 <th>Status</th>
                                 <th>Date</th>
                                 <th>Actions</th>
@@ -233,6 +236,24 @@ export default function AdminReviews() {
 
                                         <td className="review-text">
                                             {review.review}
+                                        </td>
+
+
+                                        <td>
+                                            <div className="review-images">
+                                                {review.images?.length ? (
+                                                    review.images.map((img, index) => (
+                                                        <img
+                                                            key={index}
+                                                            src={imageUrl(img)}
+                                                            alt={`Review ${index + 1}`}
+                                                            className="review-thumb"
+                                                        />
+                                                    ))
+                                                ) : (
+                                                    <span>No Images</span>
+                                                )}
+                                            </div>
                                         </td>
 
                                         <td>
@@ -294,6 +315,7 @@ export default function AdminReviews() {
 
                 </div>
             )}
+
         </div>
     );
 }
