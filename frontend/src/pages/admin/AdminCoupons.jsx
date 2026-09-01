@@ -25,8 +25,26 @@ export default function AdminCoupons() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const load = () => couponApi.list().then((r) => setCoupons(r.data.coupons || [])).catch(() => { });
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(coupons.length / itemsPerPage);
+
+  const currentCoupons = coupons.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+
+  const load = () =>
+    couponApi
+      .list()
+      .then((r) => {
+        setCoupons(r.data.coupons || []);
+        setCurrentPage(1);
+      })
+      .catch(() => { });
   useEffect(() => { load(); }, []);
 
   const f = (k) => ({ value: form[k], onChange: (e) => setForm({ ...form, [k]: e.target.value }) });
@@ -278,7 +296,7 @@ export default function AdminCoupons() {
               </tr>
             </thead>
             <tbody>
-              {coupons.map((c) => (
+              {currentCoupons.map((c) => (
                 <tr
                   key={c._id}
                   className={
@@ -309,7 +327,7 @@ export default function AdminCoupons() {
 
                   <td>₹{c.minimumOrderAmount}</td>
 
-                 
+
                   <td>
                     {c.startDate
                       ? new Date(c.startDate).toLocaleDateString("en-IN")
@@ -371,10 +389,34 @@ export default function AdminCoupons() {
                   </td>
                 </tr>
               ))}
-              {coupons.length === 0 && <tr><td colSpan="14" style={{ color: "var(--muted)" }}>No coupons yet.</td></tr>}
+              {currentCoupons.length === 0 && <tr><td colSpan="14" style={{ color: "var(--muted)" }}>No coupons yet.</td></tr>}
             </tbody>
           </table>
+          <div className="pagination">
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
 
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={currentPage === i + 1 ? "active" : ""}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </>

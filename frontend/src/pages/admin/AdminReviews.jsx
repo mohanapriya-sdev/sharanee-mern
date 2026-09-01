@@ -16,7 +16,9 @@ export default function AdminReviews() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("All");
+    const [currentPage, setCurrentPage] = useState(1);
 
+    const itemsPerPage = 5;
 
     const loadReviews = async () => {
         try {
@@ -35,6 +37,10 @@ export default function AdminReviews() {
     useEffect(() => {
         loadReviews();
     }, []);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, status]);
 
     const stats = useMemo(() => {
         const total = reviews.length;
@@ -78,6 +84,16 @@ export default function AdminReviews() {
 
         return matchSearch && matchStatus;
     });
+
+
+    const totalPages = Math.ceil(
+        filteredReviews.length / itemsPerPage
+    );
+
+    const currentReviews = filteredReviews.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
 
     const changeStatus = async (id, value) => {
         try {
@@ -207,7 +223,7 @@ export default function AdminReviews() {
                                 </tr>
                             ) : (
 
-                                filteredReviews.map((review) => (
+                                currentReviews.map((review) => (
 
                                     <tr key={review._id}>
 
@@ -314,8 +330,36 @@ export default function AdminReviews() {
                     </table>
 
                 </div>
-            )}
 
+
+            )}
+            <div className="pagination">
+                <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                        key={i + 1}
+                        className={currentPage === i + 1 ? "active" : ""}
+                        onClick={() => setCurrentPage(i + 1)}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+
+                <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={
+                        currentPage === totalPages || totalPages === 0
+                    }
+                >
+                    Next
+                </button>
+            </div>
         </div>
     );
 }

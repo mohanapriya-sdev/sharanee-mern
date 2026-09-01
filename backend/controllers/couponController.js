@@ -22,54 +22,71 @@ const createCoupon = asyncHandler(async (req, res) => {
     ...req.body,
 
 
-// New fields — old coupons/default requests remain safe
-maximumDiscount: Number(req.body.maximumDiscount) || 0,
-applicableTo: req.body.applicableTo || "All Products",
-firstOrderOnly: req.body.firstOrderOnly || false,
+    // New fields — old coupons/default requests remain safe
+    maximumDiscount: Number(req.body.maximumDiscount) || 0,
+    applicableTo: req.body.applicableTo || "All Products",
+    firstOrderOnly: req.body.firstOrderOnly || false,
 
-remainingCount: Number(req.body.maxUses) || 100,
+    remainingCount: Number(req.body.maxUses) || 100,
 
 
-};
+  };
 
-const status = getCouponStatus(couponData);
+  const status = getCouponStatus(couponData);
 
-const coupon = await Coupon.create({
-  ...couponData,
-  status,
-});
+  const coupon = await Coupon.create({
+    ...couponData,
+    status,
+  });
 
-res.status(201).json({ coupon });
+  res.status(201).json({ coupon });
 });
 
 // @route GET /api/coupons (admin)
+// @route GET /api/coupons (admin)
 const listCoupons = asyncHandler(async (req, res) => {
-  const coupons = await Coupon.find().sort({ createdAt: -1 });
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+
+  const totalCoupons = await Coupon.countDocuments();
+
+  const coupons = await Coupon.find()
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
   for (const coupon of coupons) {
     const status = getCouponStatus(coupon);
 
-  
-// Update status and remaining uses
-const remainingCount = Math.max(
-  (coupon.maxUses || 0) - (coupon.usedCount || 0),
-  0
-);
+    const remainingCount = Math.max(
+      (coupon.maxUses || 0) - (coupon.usedCount || 0),
+      0
+    );
 
-if (
-  coupon.status !== status ||
-  coupon.remainingCount !== remainingCount
-) {
-  coupon.status = status;
-  coupon.remainingCount = remainingCount;
-  await coupon.save();
-}
-
-
+    if (
+      coupon.status !== status ||
+      coupon.remainingCount !== remainingCount
+    ) {
+      coupon.status = status;
+      coupon.remainingCount = remainingCount;
+      await coupon.save();
+    }
   }
 
-  res.json({ coupons });
+  res.json({
+    coupons,
+    currentPage: page,
+    totalPages: Math.ceil(totalCoupons / limit),
+    totalCoupons,
+    limit,
+  });
 });
+
+
+
+
+
 const getActiveCoupons = asyncHandler(async (req, res) => {
   const coupons = await Coupon.find({
     active: true,
@@ -199,48 +216,48 @@ const applyCoupon = asyncHandler(async (req, res) => {
         "";
 
 
-  return (
-    categoryName.toLowerCase() ===
-    coupon.applicableTo.toLowerCase()
-  );
-});
-
-if (!hasEligibleProduct) {
-  return res.status(400).json({
-    message: `This coupon is valid only for ${ coupon.applicableTo }.`,
-  });
-}
-
-
-}
-
-// Calculate discount
-let discount = 0;
-
-    if (coupon.discountType === "Percentage") {
-      discount = Math.round(
-        (Number(totalAmount) * Number(coupon.discountValue)) / 100
+      return (
+        categoryName.toLowerCase() ===
+        coupon.applicableTo.toLowerCase()
       );
+    });
 
-// Example: 20% OFF up to ₹200
-if (
-  Number(coupon.maximumDiscount) > 0 &&
-  discount > Number(coupon.maximumDiscount)
-) {
-  discount = Number(coupon.maximumDiscount);
-}
-
-    } else if (coupon.discountType === "Flat") {
-      discount = Number(coupon.discountValue);
-    } else if (coupon.discountType === "Free Shipping") {
-      discount = 0;
+    if (!hasEligibleProduct) {
+      return res.status(400).json({
+        message: `This coupon is valid only for ${coupon.applicableTo}.`,
+      });
     }
 
-    res.json({
-      coupon,
-      discount: Math.min(discount, Number(totalAmount)),
-    });
+
+  }
+
+  // Calculate discount
+  let discount = 0;
+
+  if (coupon.discountType === "Percentage") {
+    discount = Math.round(
+      (Number(totalAmount) * Number(coupon.discountValue)) / 100
+    );
+
+    // Example: 20% OFF up to ₹200
+    if (
+      Number(coupon.maximumDiscount) > 0 &&
+      discount > Number(coupon.maximumDiscount)
+    ) {
+      discount = Number(coupon.maximumDiscount);
+    }
+
+  } else if (coupon.discountType === "Flat") {
+    discount = Number(coupon.discountValue);
+  } else if (coupon.discountType === "Free Shipping") {
+    discount = 0;
+  }
+
+  res.json({
+    coupon,
+    discount: Math.min(discount, Number(totalAmount)),
   });
+});
 
 // @route PUT /api/coupons/:id (admin)
 const updateCoupon = asyncHandler(async (req, res) => {

@@ -10,6 +10,10 @@ export default function AdminReturns() {
     const [selectedReturn, setSelectedReturn] = useState(null);
     const [updating, setUpdating] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const itemsPerPage = 5;
+
     const loadReturns = async () => {
         try {
             setLoading(true);
@@ -17,6 +21,7 @@ export default function AdminReturns() {
             const response = await returnApi.getAll();
 
             setReturns(response.data.returns || []);
+            setCurrentPage(1);
         } catch (error) {
             console.error("Admin returns error:", error);
 
@@ -35,6 +40,15 @@ export default function AdminReturns() {
         loadReturns();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const totalPages = Math.ceil(
+        returns.length / itemsPerPage
+    );
+
+    const currentReturns = returns.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
 
     const updateReturn = async (status) => {
         if (!selectedReturn) return;
@@ -177,7 +191,7 @@ export default function AdminReturns() {
                         </thead>
 
                         <tbody>
-                            {returns.map((item) => (
+                            {currentReturns.map((item) => (
                                 <tr key={item._id}>
                                     <td>
                                         <strong>
@@ -235,6 +249,8 @@ export default function AdminReturns() {
                         </tbody>
                     </table>
                 </div>
+
+
             )}
             {selectedReturn && (
                 <div className="return-admin-modal-overlay">
@@ -334,6 +350,33 @@ export default function AdminReturns() {
                     </div>
                 </div>
             )}
+            <div className="pagination">
+                <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                        key={i + 1}
+                        className={currentPage === i + 1 ? "active" : ""}
+                        onClick={() => setCurrentPage(i + 1)}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+
+                <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={
+                        currentPage === totalPages || totalPages === 0
+                    }
+                >
+                    Next
+                </button>
+            </div>
         </div>
     );
 }

@@ -11,6 +11,10 @@ export default function AdminComplaints() {
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [updatingId, setUpdatingId] = useState(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const itemsPerPage = 5;
+
     const loadComplaints = async () => {
         try {
             setLoading(true);
@@ -18,6 +22,7 @@ export default function AdminComplaints() {
             const response = await complaintApi.adminGetAll();
 
             setComplaints(response.data.complaints || []);
+            setCurrentPage(1);
         } catch (error) {
             console.error("Could not load complaints:", error);
 
@@ -33,6 +38,16 @@ export default function AdminComplaints() {
     useEffect(() => {
         loadComplaints();
     }, []);
+
+    const totalPages = Math.ceil(
+        complaints.length / itemsPerPage
+    );
+
+    const currentComplaints = complaints.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
 
     const updateStatus = async (id, status) => {
         try {
@@ -96,7 +111,7 @@ export default function AdminComplaints() {
                         </thead>
 
                         <tbody>
-                            {complaints.map((complaint) => (
+                            {currentComplaints.map((complaint) => (
                                 <tr key={complaint._id}>
                                     <td>
                                         <div className="complaint-customer">
@@ -169,6 +184,34 @@ export default function AdminComplaints() {
                     </table>
                 </div>
             )}
+
+            <div className="pagination">
+                <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                        key={i + 1}
+                        className={currentPage === i + 1 ? "active" : ""}
+                        onClick={() => setCurrentPage(i + 1)}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+
+                <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={
+                        currentPage === totalPages || totalPages === 0
+                    }
+                >
+                    Next
+                </button>
+            </div>
 
             {selectedComplaint && (
                 <div

@@ -19,6 +19,10 @@ export default function AdminContacts() {
     const [replyText, setReplyText] = useState("");
     const [sendingReply, setSendingReply] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const itemsPerPage = 5;
+
     // =========================
     // Load Contact Messages
     // =========================
@@ -27,8 +31,8 @@ export default function AdminContacts() {
             setLoading(true);
 
             const response = await contactApi.getAll();
-
             setContacts(response.data.contacts || []);
+            setCurrentPage(1);
         } catch (error) {
             console.error("Load contacts error:", error);
 
@@ -44,6 +48,17 @@ export default function AdminContacts() {
     useEffect(() => {
         loadContacts();
     }, []);
+
+
+    const totalPages = Math.ceil(
+        contacts.length / itemsPerPage
+    );
+
+    const currentContacts = contacts.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
 
     // =========================
     // Update Status
@@ -237,7 +252,7 @@ export default function AdminContacts() {
                             </thead>
 
                             <tbody>
-                                {contacts.map((contact) => (
+                                {currentContacts.map((contact) => (
                                     <Fragment key={contact._id}>
                                         <tr key={contact._id}>
                                             <td>
@@ -318,7 +333,37 @@ export default function AdminContacts() {
                             </tbody>
                         </table>
                     </div>
+
+
                 )}
+
+                <div className="pagination">
+                    <button
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                            key={i + 1}
+                            className={currentPage === i + 1 ? "active" : ""}
+                            onClick={() => setCurrentPage(i + 1)}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+
+                    <button
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={
+                            currentPage === totalPages || totalPages === 0
+                        }
+                    >
+                        Next
+                    </button>
+                </div>
             </div>
 
             {/* =========================
