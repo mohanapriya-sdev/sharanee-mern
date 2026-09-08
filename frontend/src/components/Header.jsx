@@ -8,7 +8,12 @@ import SearchOverlay from "./SearchOverlay";
 
 export default function Header() {
     const { user, logout, isAdmin } = useAuth();
-    const { cartCount, cartTotal, wishlist } = useCart();
+    const {
+        cartCount,
+        cartTotal,
+        cartBadge,
+        wishlistBadge,
+    } = useCart();
 
     const [drawer, setDrawer] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
@@ -18,6 +23,8 @@ export default function Header() {
 
     const acctRef = useRef(null);
     const navigate = useNavigate();
+
+    const guestMobile = localStorage.getItem("guestMobile");
 
     {/*  useEffect(() => {
         categoryApi
@@ -231,9 +238,9 @@ export default function Header() {
                             >
                                 <Icon.Wishlist />
 
-                                {wishlist.length > 0 && (
+                                {wishlistBadge > 0 && (
                                     <span className="icon-count">
-                                        {wishlist.length}
+                                        {wishlistBadge}
                                     </span>
                                 )}
                             </Link>
@@ -310,9 +317,28 @@ export default function Header() {
                                         </>
                                     ) : (
                                         <>
+
                                             <div className="acct-hi">
                                                 Welcome to Sharanee
                                             </div>
+
+                                            {guestMobile && (
+                                                <Link
+                                                    to="/guest-orders"
+                                                    onClick={() => setAcctOpen(false)}
+                                                >
+                                                    Track Guest Order
+                                                </Link>
+                                            )}
+
+                                            {guestMobile && (
+                                                <Link
+                                                    to="/guest-messages"
+                                                    onClick={() => setAcctOpen(false)}
+                                                >
+                                                    My Messages
+                                                </Link>
+                                            )}
 
                                             <Link
                                                 to="/login"
@@ -345,9 +371,9 @@ export default function Header() {
                                 <span className="ic-btn">
                                     <Icon.Cart />
 
-                                    {cartCount > 0 && (
+                                    {cartBadge > 0 && (
                                         <span className="icon-count">
-                                            {cartCount}
+                                            {cartBadge}
                                         </span>
                                     )}
                                 </span>

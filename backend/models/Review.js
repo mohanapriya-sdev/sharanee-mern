@@ -5,7 +5,17 @@ const reviewSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
+    },
+
+    guestMobile: {
+      type: String,
+      default: "",
+    },
+
+    guestName: {
+      type: String,
+      default: "",
     },
 
     product: {

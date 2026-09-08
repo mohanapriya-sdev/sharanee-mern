@@ -68,11 +68,65 @@ const addReview = asyncHandler(async (req, res) => {
 });
 
 
+// @route POST /api/reviews/guest
+// Guest Review
+
+const addGuestReview = asyncHandler(async (req, res) => {
+  const { guestMobile, product, rating, review } = req.body;
+
+  const images = req.files?.map((file) => file.path) || [];
+
+  if (!guestMobile || !product || !rating) {
+    return res.status(400).json({
+      message: "Guest mobile, product and rating are required",
+    });
+  }
+
+  const deliveredOrder = await Order.findOne({
+    "guestDetails.mobile": guestMobile,
+    orderStatus: "Delivered",
+    "items.product": product,
+  });
+
+  if (!deliveredOrder) {
+    return res.status(403).json({
+      message: "You can review this product only after it has been delivered.",
+    });
+  }
+
+  const existingReview = await Review.findOne({
+    guestMobile,
+    product,
+  });
+
+  if (existingReview) {
+    return res.status(400).json({
+      message: "You have already reviewed this product.",
+    });
+  }
+
+  const doc = await Review.create({
+    guestMobile,
+    guestName: deliveredOrder.guestDetails?.fullName || "Guest Customer",
+    product,
+    rating,
+    review,
+    images,
+  });
+
+  await syncProductRating(product);
+
+  res.status(201).json({
+    success: true,
+    review: doc,
+  });
+});
+
 
 // @route  GET /api/reviews/:productId
 const reviewsForProduct = asyncHandler(async (req, res) => {
   const reviews = await Review.find({ product: req.params.productId })
-    .populate("user", "fullName")
+    .populate("user", "fullName email")
     .sort({ createdAt: -1 });
   res.json({ reviews });
 });
@@ -158,7 +212,7 @@ const getAllReviews = asyncHandler(async (req, res) => {
 
 const getHomeReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.find({ status: "Approved" })
-    .populate("user", "fullName")
+    .populate("user", "fullName email")
     .populate("product", "productName")
     .sort({ createdAt: -1 });
 
@@ -196,6 +250,7 @@ const updateReviewStatus = asyncHandler(async (req, res) => {
 
 module.exports = {
   addReview,
+  addGuestReview,
   reviewsForProduct,
   updateReview,
   removeReview,

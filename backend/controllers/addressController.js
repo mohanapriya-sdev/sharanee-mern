@@ -3,9 +3,24 @@ const axios = require("axios");
 const asyncHandler = require("../utils/asyncHandler");
 
 // @route  POST /api/address
+// @route  POST /api/address
 const addAddress = asyncHandler(async (req, res) => {
-  const address = await Address.create(req.body);
-  res.status(201).json({ address });
+  const addressData = { ...req.body };
+
+  // Logged-in user
+  if (req.user) {
+    addressData.user = req.user._id;
+  } else {
+    // Guest user
+    addressData.user = null;
+  }
+
+  const address = await Address.create(addressData);
+
+  res.status(201).json({
+    success: true,
+    address,
+  });
 });
 
 // @route  GET /api/address/:userId

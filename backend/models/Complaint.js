@@ -2,10 +2,27 @@ const mongoose = require("mongoose");
 
 const complaintSchema = new mongoose.Schema(
     {
+        // Logged in customer
         customer: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            default: null,
+        },
+
+        // Guest customer
+        guestMobile: {
+            type: String,
+            default: "",
+        },
+
+        guestName: {
+            type: String,
+            default: "",
+        },
+
+        guestEmail: {
+            type: String,
+            default: "",
         },
 
         order: {
@@ -28,7 +45,6 @@ const complaintSchema = new mongoose.Schema(
     },
     {
         timestamps: true,
-    }
-);
+    });
 
 module.exports = mongoose.model("Complaint", complaintSchema);

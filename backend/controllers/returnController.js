@@ -117,11 +117,21 @@ const allReturns = asyncHandler(async (req, res) => {
   const returns = await Return.find()
     .populate("user", "fullName email phone")
     .populate("order")
-    .populate(
-      "product",
-      "productName price discountPrice images"
-    )
+    .populate("product", "productName price discountPrice images")
     .sort({ createdAt: -1 });
+
+  console.log("FIRST RETURN:");
+  console.log(JSON.stringify(returns[0], null, 2));
+
+  console.log("TOTAL RETURNS:", returns.length);
+  console.log(
+    returns.map(r => ({
+      id: r._id,
+      guestMobile: r.guestMobile,
+      user: r.user,
+      product: r.product?.productName,
+    }))
+  );
 
   res.json({
     success: true,
@@ -234,11 +244,103 @@ const updateReturnStatus = asyncHandler(async (req, res) => {
     return: updatedReturn,
   });
 });
+const createGuestReturn = asyncHandler(async (req, res) => {
+  const { guestMobile, order, product, reason } = req.body;
 
+  if (!guestMobile || !order || !product || !reason?.trim()) {
+    return res.status(400).json({
+      message: "Guest mobile, order, product and reason are required",
+    });
+  }
+
+  const existingOrder = await Order.findOne({
+    _id: order,
+    "guestDetails.mobile": guestMobile,
+  });
+
+  if (!existingOrder) {
+    return res.status(404).json({
+      message: "Order not found",
+    });
+  }
+
+  if (existingOrder.orderStatus !== "Delivered") {
+    return res.status(400).json({
+      message: "Return is allowed only after delivery",
+    });
+  }
+
+  const productExists = existingOrder.items.some(
+    (item) => item.product.toString() === product.toString()
+  );
+
+  if (!productExists) {
+    return res.status(400).json({
+      message: "Product not found in this order",
+    });
+  }
+
+  const alreadyReturned = await Return.findOne({
+    guestMobile,
+    order,
+    product,
+  });
+
+  if (alreadyReturned) {
+    return res.status(400).json({
+      message: "Return already submitted",
+    });
+  }
+  const returnRequest = await Return.create({
+    guestMobile,
+    order,
+    product,
+    reason: reason.trim(),
+  });
+
+  const populatedReturn = await Return.findById(returnRequest._id)
+    .populate("order")
+    .populate("product", "productName price discountPrice images");
+
+  res.status(201).json({
+    success: true,
+    message: "Guest return request submitted successfully",
+    return: populatedReturn,
+  });
+});
+
+
+const guestReturns = asyncHandler(async (req, res) => {
+  const { guestMobile } = req.body;
+
+  if (!guestMobile) {
+    return res.status(400).json({
+      message: "Guest mobile is required",
+    });
+  }
+
+  const returns = await Return.find({
+    guestMobile,
+  })
+    .populate("order")
+    .populate(
+      "product",
+      "productName price discountPrice images"
+    )
+    .sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    count: returns.length,
+    returns,
+  });
+});
 
 module.exports = {
   createReturn,
+  createGuestReturn,
   myReturns,
+  guestReturns,
   allReturns,
   updateReturnStatus,
 };

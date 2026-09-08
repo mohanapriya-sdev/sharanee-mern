@@ -235,7 +235,7 @@ export default function AdminDashboard() {
             <tbody>
               {analytics?.recentOrders?.map((o) => (
                 <tr key={o._id}>
-                  <td>{o.user?.fullName || "—"}</td>
+                  <td>{o.user?.fullName || o.guestDetails?.fullName || "—"}</td>
                   <td>₹ {o.totalAmount?.toLocaleString("en-IN")}</td>
                   <td><span className="tag">{o.orderStatus}</span></td>
                   <td>{new Date(o.createdAt).toLocaleDateString()}</td>

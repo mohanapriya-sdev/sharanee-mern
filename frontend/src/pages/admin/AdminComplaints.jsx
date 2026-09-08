@@ -116,11 +116,17 @@ export default function AdminComplaints() {
                                     <td>
                                         <div className="complaint-customer">
                                             <strong>
-                                                {complaint.customer?.fullName || "Customer"}
+                                                {complaint.customer?.fullName ||
+                                                    complaint.guestName ||
+                                                    "Guest Customer"}
                                             </strong>
 
+
                                             <span>
-                                                {complaint.customer?.email || "No email"}
+                                                {complaint.customer?.email ||
+                                                    complaint.guestEmail ||
+                                                    complaint.order?.guestDetails?.email ||
+                                                    "No email"}
                                             </span>
                                         </div>
                                     </td>
@@ -246,7 +252,10 @@ export default function AdminComplaints() {
                         <div className="complaint-detail">
                             <span>Email</span>
                             <strong>
-                                {selectedComplaint.customer?.email || "Not available"}
+                                {selectedComplaint.customer?.email ||
+                                    selectedComplaint.guestEmail ||
+                                    selectedComplaint.order?.guestDetails?.email ||
+                                    "Not available"}
                             </strong>
                         </div>
 

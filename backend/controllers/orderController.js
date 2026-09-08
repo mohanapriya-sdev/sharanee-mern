@@ -160,6 +160,8 @@ const createNotificationSafely = async ({ title, message }) => {
 const placeOrder = asyncHandler(async (req, res) => {
   const {
     user,
+    guest,
+    guestDetails,
     items,
     shippingAddress,
     totalAmount,
@@ -173,20 +175,23 @@ const placeOrder = asyncHandler(async (req, res) => {
   const authenticatedUserId =
     req.user?._id ||
     req.user?.id ||
-    user;
+    user ||
+    null;
 
-  if (!authenticatedUserId) {
-    return res.status(400).json({
-      success: false,
-      message: "User is required",
-    });
-  }
+  if (!guest) {
+    if (!authenticatedUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "User is required",
+      });
+    }
 
-  if (!isValidObjectId(authenticatedUserId)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid user ID",
-    });
+    if (!isValidObjectId(authenticatedUserId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
   }
 
   if (!shippingAddress) {
@@ -196,7 +201,7 @@ const placeOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  if (!isValidObjectId(shippingAddress)) {
+  if (!guest && !isValidObjectId(shippingAddress)) {
     return res.status(400).json({
       success: false,
       message: "Invalid shipping address ID",
@@ -433,12 +438,19 @@ const placeOrder = asyncHandler(async (req, res) => {
   const courierName = "Delhivery";
 
   const order = await Order.create({
-    user: authenticatedUserId,
+    user: guest ? undefined : authenticatedUserId,
+
+    guestDetails: guest ? guestDetails : undefined,
+
     items: normalizedItems,
-    shippingAddress,
+
+    shippingAddress: guest ? null : shippingAddress,
+
     totalAmount: parsedTotalAmount,
+
     couponCode: validCoupon ? validCoupon.code : "",
     discount: couponDiscount,
+    finalAmount: calculatedFinalAmount,
     finalAmount: calculatedFinalAmount,
     paymentMethod,
     paymentStatus:
@@ -490,18 +502,20 @@ const placeOrder = asyncHandler(async (req, res) => {
     message: `A new order (${order._id}) has been placed.`,
   });
 
-  await order.populate([
-    {
-      path: "items.product",
-    },
-    {
-      path: "shippingAddress",
-    },
-    {
-      path: "user",
-      select: "fullName name email phone",
-    },
-  ]);
+  if (!guest) {
+    await order.populate([
+      {
+        path: "items.product",
+      },
+      {
+        path: "shippingAddress",
+      },
+      {
+        path: "user",
+        select: "fullName name email phone",
+      },
+    ]);
+  }
 
   return res.status(201).json({
     success: true,
@@ -964,6 +978,148 @@ const updateTracking = asyncHandler(async (req, res) => {
   });
 });
 
+
+// @desc Get all guest orders
+// @route POST /api/orders/guest/orders
+const guestOrders = asyncHandler(async (req, res) => {
+  const { mobile } = req.body;
+
+  if (!mobile) {
+    return res.status(400).json({
+      success: false,
+      message: "Mobile number is required",
+    });
+  }
+
+  const orders = await Order.find({
+    "guestDetails.mobile": mobile,
+  })
+    .populate("items.product")
+    .sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    orders,
+  });
+});
+
+
+// @desc Get single guest order
+// @route POST /api/orders/guest/order/:id
+const guestOrder = asyncHandler(async (req, res) => {
+  const { mobile } = req.body;
+
+  const order = await Order.findOne({
+    _id: req.params.id,
+    "guestDetails.mobile": mobile,
+  }).populate("items.product");
+
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+  }
+
+  res.json({
+    success: true,
+    order,
+  });
+});
+
+
+// @desc Guest tracking
+// @route POST /api/orders/guest/tracking/:id
+const guestTracking = asyncHandler(async (req, res) => {
+  const { mobile } = req.body;
+
+  const order = await Order.findOne({
+    _id: req.params.id,
+    "guestDetails.mobile": mobile,
+  }).select(
+    "_id orderStatus trackingId courierName trackingHistory paymentStatus deliveryDate createdAt updatedAt"
+  );
+
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+  }
+
+  res.json({
+    success: true,
+    tracking: order,
+    order,
+  });
+});
+
+// @desc Guest cancel order
+// @route PUT /api/orders/guest/cancel/:id
+const guestCancel = asyncHandler(async (req, res) => {
+  const { mobile, cancellationReason } = req.body;
+
+  if (!mobile) {
+    return res.status(400).json({
+      success: false,
+      message: "Mobile number is required",
+    });
+  }
+
+  const order = await Order.findOne({
+    _id: req.params.id,
+    "guestDetails.mobile": mobile,
+  });
+
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+  }
+
+  if (order.orderStatus === "Cancelled") {
+    return res.status(400).json({
+      success: false,
+      message: "Order already cancelled",
+    });
+  }
+
+  if (
+    ["Shipped", "Out for Delivery", "Delivered"].includes(
+      order.orderStatus
+    )
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: `Order cannot be cancelled once it is ${order.orderStatus}`,
+    });
+  }
+
+  order.orderStatus = "Cancelled";
+  order.cancellationReason = cancellationReason || "Cancelled by guest";
+  order.cancelledAt = new Date();
+
+  await order.save();
+
+  await Promise.all(
+    order.items.map((item) =>
+      adjustStock(
+        item.product,
+        Number(item.quantity),
+        item.selectedColor
+      )
+    )
+  );
+
+  res.json({
+    success: true,
+    message: "Order cancelled successfully",
+    order,
+  });
+});
+
+
 module.exports = {
   placeOrder,
   myOrders,
@@ -971,4 +1127,8 @@ module.exports = {
   cancelOrder,
   getTracking,
   updateTracking,
+  guestOrders,
+  guestOrder,
+  guestTracking,
+  guestCancel,
 };

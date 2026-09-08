@@ -7,6 +7,10 @@ const {
   cancelOrder,
   getTracking,
   updateTracking,
+  guestOrders,
+  guestOrder,
+  guestTracking,
+  guestCancel,
 } = require("../controllers/orderController");
 
 const { protect, admin } = require("../middleware/auth");
@@ -21,7 +25,7 @@ const router = express.Router();
 
 // Place a new order
 // POST /api/orders
-router.post("/", protect, placeOrder);
+router.post("/", placeOrder);
 
 // Get logged-in customer's orders
 // GET /api/orders/user/:userId
@@ -34,6 +38,30 @@ router.get("/tracking/:id", protect, getTracking);
 // Cancel a specific order
 // PUT /api/orders/cancel/:id
 router.put("/cancel/:id", protect, cancelOrder);
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Guest Order Routes
+|--------------------------------------------------------------------------
+*/
+
+// Get all guest orders by mobile number
+// POST /api/orders/guest/orders
+router.post("/guest/orders", guestOrders);
+
+// Get single guest order
+// POST /api/orders/guest/order/:id
+router.post("/guest/order/:id", guestOrder);
+
+// Get guest tracking
+// POST /api/orders/guest/tracking/:id
+router.post("/guest/tracking/:id", guestTracking);
+
+router.put("/guest/cancel/:id", guestCancel);
+
+
 
 /*
 |--------------------------------------------------------------------------

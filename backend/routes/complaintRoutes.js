@@ -4,15 +4,23 @@ const router = express.Router();
 
 const {
     createComplaint,
+    createGuestComplaint,
     getMyComplaints,
+    getGuestComplaints,
     getAllComplaints,
     updateComplaintStatus,
 } = require("../controllers/complaintController");
+
 
 const {
     protect,
     admin,
 } = require("../middleware/auth");
+
+// GUEST: Create complaint
+router.post("/guest", createGuestComplaint);
+router.post("/guest/my", getGuestComplaints);
+
 
 // CUSTOMER: Create complaint
 router.post("/", protect, createComplaint);

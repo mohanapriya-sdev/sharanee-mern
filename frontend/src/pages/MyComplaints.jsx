@@ -14,7 +14,15 @@ export default function MyComplaints() {
         try {
             setLoading(true);
 
-            const response = await complaintApi.myComplaints();
+            const guestMobile = localStorage.getItem("guestMobile");
+
+            let response;
+
+            if (guestMobile) {
+                response = await complaintApi.guestComplaints(guestMobile);
+            } else {
+                response = await complaintApi.myComplaints();
+            }
 
             setComplaints(response.data.complaints || []);
         } catch (error) {

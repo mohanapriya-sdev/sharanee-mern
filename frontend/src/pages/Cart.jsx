@@ -1,39 +1,52 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { couponApi } from "../api/endpoints";
 import { imageUrl } from "../api/client";
 import { Icon } from "../components/Icons";
 import { useToast } from "../context/ToastContext";
- 
+
 export default function Cart() {
-  const { cart, cartTotal, updateQty, removeFromCart } = useCart();
-const [code, setCode] = useState("");
-const [discount, setDiscount] = useState(0);
-const [appliedCode, setAppliedCode] = useState("");
-const [coupons, setCoupons] = useState([]);
+  const {
+    cart,
+    cartTotal,
+    updateQty,
+    removeFromCart,
+    clearCartBadge,
+  } = useCart();
+  const { user } = useAuth();
+  const [code, setCode] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState("");
+  const [coupons, setCoupons] = useState([]);
   const toast = useToast();
   const navigate = useNavigate();
- useEffect(() => {
-  const fetchCoupons = async () => {
-    try {
-    const { data } = await couponApi.active();
 
-      console.log("FULL COUPON RESPONSE:", data);
-      console.log("IS ARRAY:", Array.isArray(data));
+  useEffect(() => {
+    clearCartBadge();
+  }, [clearCartBadge]);
+  
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const { data } = await couponApi.active();
 
-      if (Array.isArray(data)) {
-        setCoupons(data);
-      } else {
-        setCoupons(data.coupons || data.data || []);
+        console.log("FULL COUPON RESPONSE:", data);
+        console.log("IS ARRAY:", Array.isArray(data));
+
+        if (Array.isArray(data)) {
+          setCoupons(data);
+        } else {
+          setCoupons(data.coupons || data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load coupons:", err);
       }
-    } catch (err) {
-      console.error("Failed to load coupons:", err);
-    }
-  };
+    };
 
-  fetchCoupons();
-}, []);
+    fetchCoupons();
+  }, []);
 
   const priceOf = (p) =>
     p.finalPrice || p.price;
@@ -150,14 +163,14 @@ const [coupons, setCoupons] = useState([]);
                       </td>
                       <td>
                         <div className="qty">
-                          <button onClick={() => updateQty(item._id, Math.max(1, item.quantity - 1))}>−</button>
+                          <button onClick={() => updateQty(user ? item._id : item.product._id, Math.max(1, item.quantity - 1))}>-</button>
                           <span>{item.quantity}</span>
-                          <button onClick={() => updateQty(item._id, item.quantity + 1)}>+</button>
+                          <button onClick={() => updateQty(user ? item._id : item.product._id, item.quantity + 1)}>+</button>
                         </div>
                       </td>
                       <td className="price">Rs. {(priceOf(p) * item.quantity).toLocaleString("en-IN")}</td>
                       <td>
-                        <button onClick={() => removeFromCart(item._id)} style={{ background: "none", border: "none", color: "var(--danger)" }}>
+                        <button onClick={() => removeFromCart(user ? item._id : item.product._id)} style={{ background: "none", border: "none", color: "var(--danger)" }}>
                           <Icon.Trash />
                         </button>
                       </td>
@@ -170,27 +183,27 @@ const [coupons, setCoupons] = useState([]);
 
           <div className="summary">
             <h3>Bill Summary</h3>
-           <div className="coupon-row">
-  <select
-    value={code}
-    onChange={(e) => setCode(e.target.value)}
-  >
-    <option value="">Select Coupon</option>
+            <div className="coupon-row">
+              <select
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              >
+                <option value="">Select Coupon</option>
 
-    {coupons.map((coupon) => (
-      <option key={coupon._id} value={coupon.code}>
-        {coupon.code}
-        {coupon.discountType === "percentage"
-          ? ` - ${coupon.discountValue}% OFF`
-          : ` - ₹${coupon.discountValue} OFF`}
-      </option>
-    ))}
-  </select>
+                {coupons.map((coupon) => (
+                  <option key={coupon._id} value={coupon.code}>
+                    {coupon.code}
+                    {coupon.discountType === "percentage"
+                      ? ` - ${coupon.discountValue}% OFF`
+                      : ` - ₹${coupon.discountValue} OFF`}
+                  </option>
+                ))}
+              </select>
 
-  <button className="btn" onClick={applyCoupon}>
-    Apply
-  </button>
-</div>
+              <button className="btn" onClick={applyCoupon}>
+                Apply
+              </button>
+            </div>
             <div className="summary-row"><span>Subtotal</span><span>Rs. {cartTotal.toLocaleString("en-IN")}</span></div>
             {discount > 0 && <div className="summary-row"><span>Discount ({appliedCode})</span><span style={{ color: "var(--danger)" }}>− Rs. {discount.toLocaleString("en-IN")}</span></div>}
             <div className="summary-row"><span>Shipping</span><span>{shipping === 0 ? "Free" : `Rs. ${shipping}`}</span></div>

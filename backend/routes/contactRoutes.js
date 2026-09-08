@@ -4,6 +4,7 @@ const router = express.Router();
 const {
     createContact,
     getMyContacts,
+    getGuestContacts,
     getContacts,
     updateContactStatus,
     replyToContact,
@@ -23,6 +24,9 @@ router.post("/", optionalAuth, createContact);
 // CUSTOMER - Get own contact messages and admin replies
 // GET /api/contacts/my
 router.get("/my", protect, getMyContacts);
+
+// GUEST - Get guest messages
+router.post("/guest", getGuestContacts);
 
 router.put("/:id/status", protect, admin, updateContactStatus);
 

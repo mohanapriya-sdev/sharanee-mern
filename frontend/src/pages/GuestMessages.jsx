@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { contactApi } from "../api/endpoints";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import "../styles/MyMessages.css";
-export default function MyMessages() {
+
+export default function GuestMessages() {
     const toast = useToast();
 
     const [messages, setMessages] = useState([]);
@@ -16,15 +16,17 @@ export default function MyMessages() {
 
             const guestMobile = localStorage.getItem("guestMobile");
 
-            const response = user
-                ? await contactApi.myMessages()
-                : await contactApi.guestMessages(guestMobile);
+            if (!guestMobile) {
+                toast.error("Guest mobile number not found.");
+                setLoading(false);
+                return;
+            }
 
-            setMessages(response.data.contacts || []);
+            const response = await contactApi.guestMessages(guestMobile);
 
             setMessages(response.data.contacts || []);
         } catch (error) {
-            console.error("Load my messages error:", error);
+            console.error("Load guest messages error:", error);
 
             toast.error(
                 error.response?.data?.message ||
@@ -41,20 +43,16 @@ export default function MyMessages() {
 
     const formatDate = (date) => {
         if (!date) return "-";
-
         return new Date(date).toLocaleString();
     };
 
     return (
         <>
-            {/* Breadcrumb */}
             <div className="crumb">
                 <div className="container">
                     <Link to="/">Home</Link>
-
                     <span className="sep">›</span>
-
-                    <span>My Messages</span>
+                    <span>Guest Messages</span>
                 </div>
             </div>
 
@@ -62,18 +60,16 @@ export default function MyMessages() {
                 <div className="container">
                     <div className="my-messages-page">
 
-                        {/* Header */}
                         <div className="my-messages-header">
                             <div>
                                 <span className="eyebrow">
                                     Customer Support
                                 </span>
 
-                                <h1>My Messages</h1>
+                                <h1>Guest Messages</h1>
 
                                 <p>
-                                    View your enquiries and replies from
-                                    SHARANEE.
+                                    View your enquiries and replies from SHARANEE.
                                 </p>
                             </div>
 
@@ -85,19 +81,16 @@ export default function MyMessages() {
                             </Link>
                         </div>
 
-                        {/* Loading */}
                         {loading ? (
                             <div className="my-messages-empty">
                                 Loading your messages...
                             </div>
                         ) : messages.length === 0 ? (
-                            /* No Messages */
                             <div className="my-messages-empty">
                                 <h3>No Messages Yet</h3>
 
                                 <p>
-                                    You haven't sent any support messages
-                                    from this account yet.
+                                    You haven't sent any support messages yet.
                                 </p>
 
                                 <Link
@@ -108,23 +101,18 @@ export default function MyMessages() {
                                 </Link>
                             </div>
                         ) : (
-                            /* Messages */
                             <div className="my-messages-list">
                                 {messages.map((message) => (
                                     <div
                                         className="my-message-card"
                                         key={message._id}
                                     >
-                                        {/* Top */}
                                         <div className="my-message-top">
                                             <div>
                                                 <h3>{message.subject}</h3>
 
                                                 <span className="my-message-date">
-                                                    Sent:{" "}
-                                                    {formatDate(
-                                                        message.createdAt
-                                                    )}
+                                                    Sent: {formatDate(message.createdAt)}
                                                 </span>
                                             </div>
 
@@ -135,7 +123,6 @@ export default function MyMessages() {
                                             </span>
                                         </div>
 
-                                        {/* Customer Message */}
                                         <div className="my-message-section">
                                             <span className="my-message-label">
                                                 Your Message
@@ -144,23 +131,17 @@ export default function MyMessages() {
                                             <p>{message.comment}</p>
                                         </div>
 
-                                        {/* Admin Reply */}
                                         {message.adminReply ? (
                                             <div className="sharanee-reply">
                                                 <div className="sharanee-reply-title">
                                                     SHARANEE Reply
                                                 </div>
 
-                                                <p>
-                                                    {message.adminReply}
-                                                </p>
+                                                <p>{message.adminReply}</p>
 
                                                 {message.repliedAt && (
                                                     <span className="reply-date">
-                                                        Replied:{" "}
-                                                        {formatDate(
-                                                            message.repliedAt
-                                                        )}
+                                                        Replied: {formatDate(message.repliedAt)}
                                                     </span>
                                                 )}
                                             </div>

@@ -198,16 +198,51 @@ const dashboard = asyncHandler(async (req, res) => {
 // @route  GET /api/admin/users
 // @access Admin
 const listUsers = asyncHandler(async (req, res) => {
-  const users = await User.find()
+  // Registered users
+  const registeredUsers = await User.find()
     .select("-password")
-    .sort({ createdAt: -1 });
+    .lean();
+
+  // Guest orders
+  const guestOrders = await Order.find({
+    user: null,
+    guestDetails: { $exists: true },
+  })
+    .select("guestDetails createdAt")
+    .lean();
+
+  // Remove duplicate guests by mobile number
+  const guestMap = new Map();
+
+  guestOrders.forEach((order) => {
+    const guest = order.guestDetails;
+    if (!guest?.mobile) return;
+
+    if (!guestMap.has(guest.mobile)) {
+      guestMap.set(guest.mobile, {
+        _id: `guest-${guest.mobile}`,
+        fullName: guest.fullName || "Guest",
+        email: guest.email || "-",
+        phone: guest.mobile,
+        role: "Guest",
+        isActive: true,
+        createdAt: order.createdAt,
+      });
+    }
+  });
+
+  const guestUsers = [...guestMap.values()];
+
+  // Merge both lists
+  const users = [...registeredUsers, ...guestUsers].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
   res.status(200).json({
     users,
     count: users.length,
   });
 });
-
 // @route  GET /api/admin/users/:id
 // @access Admin
 const getUser = asyncHandler(async (req, res) => {

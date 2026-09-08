@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "../styles/MyOrders.css";
 import {
   orderApi,
@@ -24,6 +24,14 @@ export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("All Orders");
   const [loading, setLoading] = useState(true);
+
+  const [searchParams] = useSearchParams();
+
+  const guestMobile = localStorage.getItem("guestMobile");
+
+  const isGuest =
+    searchParams.get("guest") === "true" ||
+    !!guestMobile;
   const [returningItem, setReturningItem] = useState(null);
   const [returnReason, setReturnReason] = useState("");
   const [submittingReturn, setSubmittingReturn] = useState(false);
@@ -41,13 +49,37 @@ export default function MyOrders() {
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [complaintText, setComplaintText] = useState("");
+  const [complaintOrder, setComplaintOrder] = useState(null);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [wishlistProductIds, setWishlistProductIds] = useState([]);
   const [myComplaints, setMyComplaints] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [editingReviewId, setEditingReviewId] = useState(null);
-
   const load = () => {
+    const guestMobile = localStorage.getItem("guestMobile");
+
+    // Guest Orders
+    if (guestMobile && !user?.id) {
+      setLoading(true);
+
+      orderApi
+        .guestOrders(guestMobile)
+        .then((response) => {
+          const orderList = response.data.orders || [];
+          setOrders([...orderList].reverse());
+        })
+        .catch(() => {
+          setOrders([]);
+          toast.error("Could not load guest orders.");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+
+      return;
+    }
+
+    // Registered User
     if (!user?.id) {
       setOrders([]);
       setLoading(false);
@@ -71,29 +103,49 @@ export default function MyOrders() {
       });
   };
 
-
   const loadReturns = async () => {
-    if (!user?.id) {
-      setMyReturns([]);
-      return;
-    }
+    console.log("guestMobile:", guestMobile);
+    console.log("user:", user);
 
     try {
-      const response = await returnApi.myReturns();
+      let response;
+
+      if (guestMobile) {
+        console.log("Calling Guest Returns API");
+        response = await returnApi.guestReturns(guestMobile);
+      } else if (user?.id) {
+        console.log("Calling Customer Returns API");
+        response = await returnApi.myReturns();
+      } else {
+        setMyReturns([]);
+        return;
+      }
+
+      console.log("Returns Response:", response.data);
+
       setMyReturns(response.data.returns || []);
-    } catch (error) {
-      console.error("Could not load returns:", error);
+    } catch (err) {
+      console.log(err);
       setMyReturns([]);
     }
   };
 
   const loadComplaints = async () => {
-    if (!user?.id) {
-      setMyComplaints([]);
-      return;
-    }
-
     try {
+      // Guest
+      if (guestMobile) {
+        const response = await complaintApi.guestComplaints(guestMobile);
+
+        setMyComplaints(response.data.complaints || []);
+        return;
+      }
+
+      // Customer
+      if (!user?.id) {
+        setMyComplaints([]);
+        return;
+      }
+
       const response = await complaintApi.myComplaints();
 
       setMyComplaints(response.data.complaints || []);
@@ -102,7 +154,6 @@ export default function MyOrders() {
       setMyComplaints([]);
     }
   };
-
   const loadRecommendedProducts = async () => {
     try {
       const response = await productApi.list();
@@ -189,10 +240,20 @@ export default function MyOrders() {
     try {
       setSubmittingCancel(true);
 
-      await orderApi.cancel(
-        cancellingOrder._id,
-        cancelReason.trim()
-      );
+
+
+      if (guestMobile) {
+        await orderApi.guestCancel(
+          guestMobile,
+          cancellingOrder._id,
+          cancelReason.trim()
+        );
+      } else {
+        await orderApi.cancel(
+          cancellingOrder._id,
+          cancelReason.trim()
+        );
+      }
 
       toast.success("Order cancelled successfully.");
 
@@ -207,13 +268,6 @@ export default function MyOrders() {
       );
     } finally {
       setSubmittingCancel(false);
-    }
-  };
-  const downloadInvoice = async (id) => {
-    try {
-      await invoiceApi.download(id);
-    } catch {
-      toast.error("Could not download invoice.");
     }
   };
 
@@ -255,14 +309,41 @@ export default function MyOrders() {
 
     try {
       setSubmittingReturn(true);
+      console.log("guestMobile =", guestMobile);
+      console.log("returningItem =", returningItem);
 
-      await returnApi.create({
-        order: returningItem.orderId,
-        product: returningItem.productId,
-        reason: returnReason.trim(),
-      });
+      if (guestMobile) {
+        console.log("Calling Guest Return API");
 
+        try {
+          console.log("Before API");
+          const res = await returnApi.guestReturn(
+            guestMobile,
+            {
+              order: returningItem.orderId,
+              product: returningItem.productId,
+              reason: returnReason.trim(),
+            }
+          );
 
+          console.log("Guest Return Success:", res.data);
+          console.log("Guest Return Response:", res.data);
+
+          console.log("API Response:", res);
+        } catch (err) {
+          console.log("FULL ERROR:", err);
+          console.log("Response:", err.response);
+          console.log("Message:", err.message);
+        }
+      } else {
+        console.log("Calling Customer Return API");
+
+        await returnApi.create({
+          order: returningItem.orderId,
+          product: returningItem.productId,
+          reason: returnReason.trim(),
+        });
+      }
       toast.success("Return request submitted successfully.");
 
       setReturningItem(null);
@@ -293,7 +374,12 @@ export default function MyOrders() {
 
       const formData = new FormData();
 
-      formData.append("user", user.id);
+      if (guestMobile) {
+        formData.append("guestMobile", guestMobile);
+      } else {
+        formData.append("user", user.id);
+      }
+
       formData.append("product", reviewingItem.productId);
       formData.append("rating", reviewRating);
       formData.append("review", reviewText.trim());
@@ -302,10 +388,22 @@ export default function MyOrders() {
         formData.append("images", img);
       });
 
-      if (editingReviewId) {
-        await reviewApi.update(editingReviewId, formData);
+      if (guestMobile) {
+
+
+        await reviewApi.guestAdd(formData);
       } else {
-        await reviewApi.add(formData);
+        formData.append("user", user.id);
+
+        if (editingReviewId) {
+          await reviewApi.update(editingReviewId, formData);
+        } else {
+          if (guestMobile) {
+            await reviewApi.guest(formData);
+          } else {
+            await reviewApi.add(formData);
+          }
+        }
       }
 
       toast.success("Thank you! Your review was submitted successfully.");
@@ -313,6 +411,9 @@ export default function MyOrders() {
       setReviewingItem(null);
       setReviewRating(5);
       setReviewText("");
+      setReviewImages([]);
+      setReviewPreviews([]);
+      setEditingReviewId(null);
 
       load();
     } catch (error) {
@@ -324,7 +425,6 @@ export default function MyOrders() {
       setSubmittingReview(false);
     }
   };
-
 
   if (loading) {
     return <div className="spinner" />;
@@ -373,7 +473,6 @@ export default function MyOrders() {
       month: "short",
     });
   };
-
 
   return (
     <div className="page-wrap my-orders-page">
@@ -662,7 +761,7 @@ export default function MyOrders() {
                           ✓ In Stock
                         </div>
 
-                        {isDelivered && (
+                        {!isGuest && isDelivered && (
 
                           <div style={{ marginTop: 10 }}>
                             {/*
@@ -755,13 +854,17 @@ export default function MyOrders() {
                     Buy Again
                   </button> */}
 
-
                   <Link
-                    to={`/orders/${order._id}/track`}
                     className="btn btn-outline"
+                    to={
+                      guestMobile
+                        ? `/orders/${order._id}/track?guest=true`
+                        : `/orders/${order._id}/track`
+                    }
                   >
                     Track Order
                   </Link>
+
 
                   {isDelivered && (
                     <button
@@ -777,9 +880,13 @@ export default function MyOrders() {
                         try {
                           const res = await reviewApi.forProduct(firstProduct.product._id);
 
-                          const myReview = res.data.reviews.find(
-                            (r) => r.user._id === user.id
-                          );
+                          const myReview = guestMobile
+                            ? res.data.reviews.find(
+                              (r) => r.guestMobile === guestMobile
+                            )
+                            : res.data.reviews.find(
+                              (r) => r.user?._id === user.id
+                            );
 
                           setReviewingItem({
                             orderId: order._id,
@@ -787,8 +894,8 @@ export default function MyOrders() {
                             productName: firstProduct.product.productName,
                           });
 
-                          if (myReview) {
-                            setEditingReviewId(myReview._id);
+                          if (myReview && !guestMobile) {
+                            setEditingReviewId(guestMobile ? null : myReview._id);
                             setReviewRating(myReview.rating);
                             setReviewText(myReview.review || "");
                             setReviewPreviews(
@@ -843,6 +950,7 @@ export default function MyOrders() {
 
                 <div className="order-info-sections">
                   {/* Delivery Details */}
+
                   <div className="order-info-box">
                     <div className="order-info-icon">🚚</div>
 
@@ -996,19 +1104,32 @@ export default function MyOrders() {
                         type="button"
                         className="help-link"
                         onClick={() => {
+                          setComplaintOrder(order);
                           setComplaintText("");
                           setShowComplaintModal(true);
                         }}
                       >
                         Raise a Complaint →
                       </button>
-                      <button
-                        type="button"
-                        className="help-link"
-                        onClick={() => setSelectedComplaint(myComplaints[0] || null)}
-                      >
-                        My Complaint Status →
-                      </button>
+                      {
+                        <button
+                          type="button"
+                          className="help-link"
+                          onClick={async () => {
+                            if (guestMobile) {
+                              const res = await complaintApi.guestComplaints(guestMobile);
+                              const complaints = res.data.complaints || [];
+
+                              setMyComplaints(complaints);
+                              setSelectedComplaint(complaints[0] || null);
+                            } else {
+                              await loadComplaints();
+                            }
+                          }}
+                        >
+                          My Complaint Status →
+                        </button>
+                      }
                     </div>
                   </div>
                 </div>
@@ -1550,8 +1671,10 @@ export default function MyOrders() {
                     }
 
                     try {
-                      await complaintApi.create({
-                        complaint: complaintText.trim(),
+                      await complaintApi.guestCreate({
+                        order: complaintOrder._id,
+                        guestMobile,
+                        complaint: complaintText,
                       });
 
                       toast.success("Your complaint has been submitted successfully.");

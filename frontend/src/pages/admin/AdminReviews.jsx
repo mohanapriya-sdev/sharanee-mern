@@ -71,12 +71,17 @@ export default function AdminReviews() {
     const filteredReviews = reviews.filter((review) => {
         const keyword = search.toLowerCase();
 
+        const reviewerName =
+            review.user?.fullName ||
+            review.guestName ||
+            "Guest Customer";
+
         const matchSearch =
             review.product?.productName
                 ?.toLowerCase()
                 .includes(keyword) ||
-            review.user?.fullName
-                ?.toLowerCase()
+            reviewerName
+                .toLowerCase()
                 .includes(keyword);
 
         const matchStatus =
@@ -232,7 +237,26 @@ export default function AdminReviews() {
                                         </td>
 
                                         <td>
-                                            {review.user?.fullName}
+                                            <div className="review-user">
+                                                <strong>
+                                                    {review.user?.fullName ||
+                                                        review.guestName ||
+                                                        "Guest Customer"}
+                                                </strong>
+
+                                                <span
+                                                    className={`review-user-type ${review.user ? "customer" : "guest"
+                                                        }`}
+                                                >
+                                                    {review.user ? "Customer" : "Guest"}
+                                                </span>
+
+                                                {!review.user && review.guestMobile && (
+                                                    <div className="review-mobile">
+                                                        {review.guestMobile}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
 
                                         <td>

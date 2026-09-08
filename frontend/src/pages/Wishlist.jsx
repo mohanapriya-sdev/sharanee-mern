@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { imageUrl } from "../api/client";
@@ -7,9 +8,16 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Wishlist() {
   const { user } = useAuth();
-  const { wishlist, removeFromWishlist, addToCart } = useCart();
+  const {
+    wishlist,
+    removeFromWishlist,
+    addToCart,
+    clearWishlistBadge,
+  } = useCart();
   const toast = useToast();
-
+  useEffect(() => {
+    clearWishlistBadge();
+  }, [clearWishlistBadge]);
   if (!user) {
     return <div className="page-wrap"><div className="container empty"><h3>Sign in to view your wishlist</h3><Link className="btn btn-gold" to="/login">Sign In</Link></div></div>;
   }

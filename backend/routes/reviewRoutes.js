@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
     addReview,
+    addGuestReview,
     reviewsForProduct,
     updateReview,
     removeReview,
@@ -21,6 +22,9 @@ router.get("/", protect, admin, getAllReviews);
 
 router.put("/:id/status", protect, admin, updateReviewStatus);
 
+// ---------- Guest ----------
+router.post( "/guest", reviewUpload.array("images", 5), addGuestReview);
+
 // ---------- Customer ----------
 router.post(
     "/",
@@ -34,6 +38,8 @@ router.get("/home", getHomeReviews);
 router.get("/can-review/:productId", protect, canReview);
 
 router.get("/:productId", reviewsForProduct);
+
+
 
 router.put(
     "/:id",

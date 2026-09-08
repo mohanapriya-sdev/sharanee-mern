@@ -70,6 +70,42 @@ const getMyContacts = async (req, res) => {
     }
 };
 
+// ======================================================
+// @desc    Get guest contact messages
+// @route   POST /api/contacts/guest
+// @access  Public
+// ======================================================
+const getGuestContacts = async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone) {
+            return res.status(400).json({
+                success: false,
+                message: "Phone number is required",
+            });
+        }
+
+        const contacts = await Contact.find({
+            user: null,
+            phone,
+        }).sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: contacts.length,
+            contacts,
+        });
+    } catch (error) {
+        console.error("Get Guest Contacts Error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch guest messages",
+        });
+    }
+};
+
 
 // ======================================================
 // @desc    Get all contact messages
@@ -230,6 +266,7 @@ const deleteContact = async (req, res) => {
 module.exports = {
     createContact,
     getMyContacts,
+    getGuestContacts,
     getContacts,
     updateContactStatus,
     replyToContact,

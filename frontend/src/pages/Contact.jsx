@@ -19,6 +19,11 @@ export default function Contact() {
 
       const response = await contactApi.create(form);
 
+      // Save guest phone for Guest Messages page
+      if (!localStorage.getItem("token")) {
+        localStorage.setItem("guestMobile", form.phone);
+      }
+
       toast.success(
         response.data.message ||
         "Thank you — we'll be in touch shortly."

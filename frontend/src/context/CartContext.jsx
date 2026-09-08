@@ -8,9 +8,14 @@ export function CartProvider({ children }) {
   const { user } = useAuth();
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
-
+  const [cartBadge, setCartBadge] = useState(0);
+  const [wishlistBadge, setWishlistBadge] = useState(0);
   const refreshCart = useCallback(async () => {
-    if (!user) { setCart([]); return; }
+    if (!user) {
+      const guestCart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+      setCart(guestCart);
+      return;
+    }
     try {
       const { data } = await cartApi.get(user.id);
       setCart(data.cart || []);
@@ -31,20 +36,52 @@ export function CartProvider({ children }) {
   }, [refreshCart, refreshWishlist]);
 
   const addToCart = async (
-    productId,
+    product,
     qty = 1,
     selectedColor = null,
     selectedSize = null
   ) => {
-    await cartApi.add(
-      user.id,
-      productId,
-      qty,
-      selectedColor,
-      selectedSize
+    // Logged-in user
+    if (user) {
+      await cartApi.add(
+        user.id,
+        product._id,
+        qty,
+        selectedColor,
+        selectedSize
+      );
+
+      await refreshCart();
+      setCartBadge((prev) => prev + qty);
+      return;
+    }
+
+    // Guest user
+    const guestCart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+
+    const existing = guestCart.find(
+      (item) =>
+        item.product._id === product._id &&
+        item.selectedColor === selectedColor &&
+        item.selectedSize === selectedSize
     );
 
-    await refreshCart();
+    if (existing) {
+      existing.quantity += qty;
+    } else {
+      guestCart.push({
+        _id: Date.now().toString(),
+        product,
+        quantity: qty,
+        selectedColor,
+        selectedSize,
+      });
+    }
+
+    localStorage.setItem("guestCart", JSON.stringify(guestCart));
+
+    setCart(guestCart);
+    setCartBadge((prev) => prev + qty);
   };
 
 
@@ -55,6 +92,7 @@ export function CartProvider({ children }) {
   const removeFromCart = async (id) => {
     await cartApi.remove(id);
     await refreshCart();
+
   };
 
   const addToWishlist = async (
@@ -72,12 +110,20 @@ export function CartProvider({ children }) {
     );
 
     await refreshWishlist();
+    setWishlistBadge((prev) => prev + 1);
   };
   const removeFromWishlist = async (id) => {
     await wishlistApi.remove(id);
     await refreshWishlist();
+
+  };
+  const clearCartBadge = () => {
+    setCartBadge(0);
   };
 
+  const clearWishlistBadge = () => {
+    setWishlistBadge(0);
+  };
   const cartCount = cart.reduce((n, i) => n + (i.quantity || 0), 0);
   const cartTotal = cart.reduce((sum, i) => {
     const p = i.product;
@@ -91,7 +137,14 @@ export function CartProvider({ children }) {
   return (
     <CartContext.Provider
       value={{
-        cart, wishlist, cartCount, cartTotal,
+        cart,
+        wishlist,
+        cartCount,
+        cartBadge,
+        wishlistBadge,
+        cartTotal,
+        clearCartBadge,
+        clearWishlistBadge,
         addToCart, updateQty, removeFromCart, refreshCart,
         addToWishlist, removeFromWishlist, refreshWishlist,
       }}

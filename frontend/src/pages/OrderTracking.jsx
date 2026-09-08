@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { orderApi } from "../api/endpoints";
 
 const STEPS = [
@@ -16,6 +16,10 @@ const COMPLETED_COLOR = "#16a34a";
 export default function OrderTracking() {
   const { id } = useParams();
 
+  const [searchParams] = useSearchParams();
+  const isGuest = searchParams.get("guest") === "true";
+  const guestMobile = localStorage.getItem("guestMobile");
+
   const [tracking, setTracking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -29,7 +33,16 @@ export default function OrderTracking() {
 
         setError("");
 
-        const response = await orderApi.tracking(id);
+        let response;
+
+        if (isGuest) {
+          response = await orderApi.guestTracking(
+            guestMobile,
+            id
+          );
+        } else {
+          response = await orderApi.tracking(id);
+        }
 
         const trackingData =
           response?.data?.tracking ||
@@ -47,7 +60,7 @@ export default function OrderTracking() {
 
         setError(
           err?.response?.data?.message ||
-            "Unable to load order tracking details"
+          "Unable to load order tracking details"
         );
       } finally {
         if (showLoader) {
@@ -55,7 +68,7 @@ export default function OrderTracking() {
         }
       }
     },
-    [id]
+    [id, isGuest, guestMobile]
   );
 
   useEffect(() => {
@@ -293,7 +306,10 @@ export default function OrderTracking() {
           )}
         </div>
 
-        <Link to="/orders" className="btn btn-outline">
+        <Link
+          to={isGuest ? "/guest-orders" : "/orders"}
+          className="btn btn-outline"
+        >
           Back to Orders
         </Link>
       </div>

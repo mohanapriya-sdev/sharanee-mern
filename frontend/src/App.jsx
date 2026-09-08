@@ -40,6 +40,7 @@ import AdminContacts from "./pages/admin/AdminContacts";
 import AdminComplaints from "./pages/admin/AdminComplaints";
 import MyReturns from "./pages/MyReturns";
 import MyComplaints from "./pages/MyComplaints";
+import GuestMessages from "./pages/GuestMessages";
 
 // Wrap a public page in the storefront layout (header + footer).
 const P = (el) => <Layout>{el}</Layout>;
@@ -66,13 +67,16 @@ export default function App() {
       <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* Requires sign-in */}
-      <Route path="/cart" element={P(<RequireAuth><Cart /></RequireAuth>)} />
-      <Route path="/checkout" element={P(<RequireAuth><Checkout /></RequireAuth>)} />
-      <Route path="/order-success/:id" element={P(<RequireAuth><OrderSuccess /></RequireAuth>)} />
-      <Route path="/orders" element={P(<RequireAuth><MyOrders /></RequireAuth>)} />
-      <Route path="/orders/:id/track" element={P(<RequireAuth><OrderTracking /></RequireAuth>)} />
+      <Route path="/cart" element={P(<Cart />)} />
+      <Route path="/checkout" element={P(<Checkout />)} />
+      <Route path="/order-success/:id" element={P(<OrderSuccess />)} />
+      <Route path="/guest-orders" element={P(<MyOrders />)} />
+      <Route path="/orders" element={P(<MyOrders />)} />
+      <Route path="/orders/:id/track" element={P(<OrderTracking />)} />
       <Route path="/account" element={P(<RequireAuth><Account /></RequireAuth>)} />
-      <Route path="/my-messages" element={P(<RequireAuth> <MyMessages /> </RequireAuth>)} />
+      <Route path="/my-messages" element={P(<MyMessages />)} />
+      <Route path="/guest-messages" element={P(<GuestMessages />)} />
+
       {/* Admin */}
       <Route path="/admin" element={A(<AdminDashboard />)} />
       <Route path="/admin/products" element={A(<AdminProducts />)} />

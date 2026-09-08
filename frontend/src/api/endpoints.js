@@ -159,6 +159,32 @@ export const orderApi = {
   tracking: (id) =>
     api.get(`/orders/tracking/${id}`),
 
+
+  // ---------- Guest Orders ----------
+
+  guestOrders: (mobile) =>
+    api.post("/orders/guest/orders", {
+      mobile,
+    }),
+
+  guestOrder: (mobile, orderId) =>
+    api.post(`/orders/guest/order/${orderId}`, {
+      mobile,
+    }),
+
+  guestTracking: (mobile, orderId) =>
+    api.post(`/orders/guest/tracking/${orderId}`, {
+      mobile,
+    }),
+
+  guestCancel: (mobile, orderId, reason) =>
+    api.put(`/orders/guest/cancel/${orderId}`, {
+      mobile,
+      cancellationReason: reason,
+    }),
+
+
+
   // Kept for places where an admin order action imports orderApi
   updateTracking: (id, data) =>
     api.put(`/orders/tracking/${id}`, data),
@@ -194,6 +220,19 @@ export const reviewApi = {
   // Home Page Reviews
   home: () =>
     api.get("/reviews/home"),
+
+  //GUEST
+  guestAdd: (formData) =>
+    api.post("/reviews/guest", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+
+  guestCanReview: (mobile, productId) =>
+    api.post(`/reviews/guest/can-review/${productId}`, {
+      mobile,
+    }),
 
   // Admin
   getAll: () =>
@@ -243,6 +282,18 @@ export const returnApi = {
   // Customer - create return request
   create: (data) =>
     api.post("/returns", data),
+
+
+  guestReturn: (guestMobile, data) =>
+    api.post("/returns/guest", {
+      guestMobile,
+      ...data,
+    }),
+
+  guestReturns: (guestMobile) =>
+    api.post("/returns/guest/my", {
+      guestMobile,
+    }),
 
   // Customer - get own return/refund requests
   myReturns: () =>
@@ -405,6 +456,13 @@ export const contactApi = {
   myMessages: () =>
     api.get("/contacts/my"),
 
+
+  guestMessages: (phone) =>
+    api.post("/contacts/guest", {
+      phone,
+    }),
+
+
   // Admin - Get all contact messages
   getAll: () =>
     api.get("/contacts"),
@@ -427,16 +485,25 @@ export const contactApi = {
 };
 
 export const complaintApi = {
-  // Customer - submit complaint
+  // Customer
   create: (data) => api.post("/complaints", data),
 
-  // Customer - get own complaints
   myComplaints: () => api.get("/complaints/my"),
 
-  // Admin - get all complaints
+  // Guest
+  guestCreate: (data) =>
+    api.post("/complaints/guest", data),
+
+  // Admin
   adminGetAll: () => api.get("/complaints"),
 
-  // Admin - update complaint status
   updateStatus: (id, status) =>
     api.put(`/complaints/${id}/status`, { status }),
+
+  guestComplaints: (guestMobile) =>
+    api.post("/complaints/guest/my", {
+      guestMobile,
+    }),
+
 };
+

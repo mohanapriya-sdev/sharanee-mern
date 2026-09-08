@@ -138,6 +138,7 @@ export default function AdminUsers() {
           >
             <option value="">All Roles</option>
             <option value="user">Customer</option>
+            <option value="Guest">Guest</option>
             <option value="admin">Admin</option>
           </select>
 
@@ -204,7 +205,11 @@ export default function AdminUsers() {
 
               <td>
                 <span className="tag">
-                  {u.role === "admin" ? "Admin" : "Customer"}
+                  {u.role === "admin"
+                    ? "Admin"
+                    : u.role === "Guest"
+                      ? "Guest"
+                      : "Customer"}
                 </span>
               </td>
 

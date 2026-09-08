@@ -8,6 +8,7 @@ import { imageUrl } from "../api/client";
 
 const EMPTY = {
   fullName: "",
+  email: "",
   mobile: "",
   alternateMobile: "",
   houseNo: "",
@@ -22,6 +23,7 @@ const EMPTY = {
 
 export default function Checkout() {
   const { user } = useAuth();
+  const [checkoutMode, setCheckoutMode] = useState(user ? "login" : "");
   const { cart, cartTotal, refreshCart } = useCart();
   const toast = useToast();
   const navigate = useNavigate();
@@ -178,8 +180,27 @@ export default function Checkout() {
 
   const saveAddress = async (e) => {
     e.preventDefault();
+
+    // Guest checkout - don't save address in database
+    if (!user) {
+      const { data } = await addressApi.add({
+        ...form,
+        user: null,
+      });
+
+      setSelected(data.address._id); // Important
+      toast.success("Address added.");
+      setShowForm(false);
+
+      return;
+    }
+
     try {
-      const { data } = await addressApi.add({ ...form, user: user.id });
+      const { data } = await addressApi.add({
+        ...form,
+        user: user.id,
+      });
+
       toast.success("Address added.");
       setShowForm(false);
       setForm(EMPTY);
@@ -189,9 +210,11 @@ export default function Checkout() {
       toast.error(err.response?.data?.message || "Could not save address.");
     }
   };
-
   const placeOrder = async () => {
-    if (!selected) { toast.error("Please select a delivery address."); return; }
+    if (user && !selected) {
+      toast.error("Please select a delivery address.");
+      return;
+    }
     setPlacing(true);
     try {
       const items = cart.map((i) => ({
@@ -199,14 +222,18 @@ export default function Checkout() {
         quantity: i.quantity,
         price: priceOf(i.product),
         selectedColor: i.selectedColor || "",
+
         selectedSize: i.selectedSize || "",
       }));
 
       console.log("CHECKOUT ITEMS:", items);
       const { data } = await orderApi.place({
-        user: user.id,
+
         items,
-        shippingAddress: selected,
+        user: user?.id || null,
+        guest: !user,
+        guestDetails: form,
+        shippingAddress: user ? selected : form,
         totalAmount: grand,
         paymentMethod: payment,
         couponCode: appliedCode,
@@ -214,9 +241,20 @@ export default function Checkout() {
         finalAmount: grand,
       });
       // Clear the cart on the server
-      await Promise.all(cart.map((i) => cartApi.remove(i._id)));
-      await refreshCart();
+      // Clear cart
+      if (user) {
+        await Promise.all(cart.map((i) => cartApi.remove(i._id)));
+        await refreshCart();
+      } else {
+        localStorage.removeItem("guestCart");
+      }
       toast.success("Order placed successfully.");
+
+      if (!user) {
+        localStorage.setItem("guestOrderToken", "true");
+        localStorage.setItem("guestMobile", form.mobile);
+      }
+
       navigate(`/order-success/${data.order._id}`);
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not place order.");
@@ -234,127 +272,180 @@ export default function Checkout() {
   return (
     <div className="page-wrap">
       <div className="crumb" style={{ marginBottom: 24 }}>
-        <div className="container"><Link to="/">Home</Link><span className="sep">›</span><Link to="/cart">Cart</Link><span className="sep">›</span>Checkout</div>
+        <div className="container"><Link to="/">Home</Link><span className="sep">›</span><Link to={user ? "/cart" : "/cart"}>Cart</Link><span className="sep">›</span>Checkout</div>
       </div>
       <div className="container">
         <h1 style={{ fontSize: "2.4rem" }}>Checkout</h1>
+
+        {!user && checkoutMode === "" && (
+          <div className="order-card" style={{ marginBottom: 20 }}>
+            <h3>How would you like to continue?</h3>
+
+            <button
+              className="btn"
+              onClick={() => navigate("/login", { state: { from: "/checkout" } })}
+              style={{ marginRight: 10 }}
+            >
+              Login / Sign Up
+            </button>
+
+            <button
+              className="btn btn-outline"
+              onClick={() => {
+                setCheckoutMode("guest");
+                setShowForm(true);
+              }}
+            >
+              Continue as Guest
+            </button>
+          </div>
+        )}
+
         <div className="cart-grid">
           <div>
             {/* Address */}
-            <h3 style={{ fontSize: "1.4rem" }}>Delivery Address</h3>
-            {addresses.map((a) => (
-              <label key={a._id} className="order-card" style={{ display: "flex", gap: 12, cursor: "pointer", alignItems: "flex-start" }}>
-                <input type="radio" name="addr" checked={selected === a._id} onChange={() => setSelected(a._id)} style={{ marginTop: 5 }} />
-                <div>
-                  <b>{a.fullName}</b> <span className="status-pill">{a.addressType}</span>
-                  <div style={{ color: "var(--cocoa-soft)", fontSize: "0.9rem", marginTop: 4 }}>
-                    {a.houseNo}, {a.area}
-                    {a.landmark ? `, ${a.landmark}` : ""}
-                    , {a.city}, {a.district}, {a.state} - {a.pincode}
-                  </div>
-                  <small style={{ color: "var(--muted)" }}>Mobile: {a.mobile}</small>
-                </div>
-              </label>
-            ))}
+            {(user || checkoutMode === "guest") && (
+              <>
+                <h3 style={{ fontSize: "1.4rem" }}>Delivery Address</h3>
+                {user && addresses.map((a) => (
+                  <label key={a._id} className="order-card" style={{ display: "flex", gap: 12, cursor: "pointer", alignItems: "flex-start" }}>
+                    <input type="radio" name="addr" checked={selected === a._id} onChange={() => setSelected(a._id)} style={{ marginTop: 5 }} />
+                    <div>
+                      <b>{a.fullName}</b> <span className="status-pill">{a.addressType}</span>
+                      <div style={{ color: "var(--cocoa-soft)", fontSize: "0.9rem", marginTop: 4 }}>
+                        {a.houseNo}, {a.area}
+                        {a.landmark ? `, ${a.landmark}` : ""}
+                        , {a.city}, {a.district}, {a.state} - {a.pincode}
+                      </div>
+                      <small style={{ color: "var(--muted)" }}>Mobile: {a.mobile}</small>
+                    </div>
+                  </label>
+                ))}
 
-            {!showForm ? (
-              <button className="btn btn-outline" onClick={() => setShowForm(true)}>+ Add New Address</button>
-            ) : (
-              <form onSubmit={saveAddress} className="order-card">
-                <h4 style={{ fontFamily: "var(--display)" }}>New Address</h4>
-                <div className="form-2col">
-                  <div className="field"><label>Full Name</label><input required {...f("fullName")} /></div>
-                  <div className="field"><label>Mobile</label><input required {...f("mobile")} /></div>
-                </div>
-                <div className="form-2col">
-                  <div className="field"><label>House / Flat No.</label><input required {...f("houseNo")} /></div>
-                  <div className="field"><label>Area / Street</label><input required {...f("area")} /></div>
-                </div>
-                <div className="form-2col">
-                  <div className="field">
-                    <label>City</label>
-                    <input
-                      value={form.city}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          city: e.target.value,
-                        })
-                      }
-                      placeholder="Enter City / Town / Village"
-                    />
-                  </div>
-                </div>
+                {user && !showForm ? (
+                  <button className="btn btn-outline" onClick={() => setShowForm(true)}>+ Add New Address</button>
+                ) : (
+                  <form onSubmit={saveAddress} className="order-card">
+                    <h4 style={{ fontFamily: "var(--display)" }}>New Address</h4>
+                    <div className="form-2col">
+                      <div className="field"><label>Full Name</label><input required {...f("fullName")} /></div>
 
-                <div className="form-2col">
-                  <div className="field">
-                    <label>District</label>
-                    <input
-                      value={form.district}
-                      readOnly
-                    />
-                  </div>
+                      <div className="field">
+                        <label>Email</label>
+                        <input
+                          type="email"
+                          required
+                          {...f("email")}
+                        />
+                      </div>
+                      <div className="field"><label>Mobile</label><input
+                        required
+                        value={form.mobile}
+                        maxLength={10}
+                        inputMode="numeric"
+                        pattern="[0-9]{10}"
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "").slice(0, 10);
 
-                  <div className="field">
-                    <label>State</label>
-                    <input
-                      value={form.state}
-                      readOnly
-                    />
-                  </div>
-                </div>
+                          setForm({
+                            ...form,
+                            mobile: value,
+                          });
+                        }}
+                      /></div>
+                    </div>
+                    <div className="form-2col">
+                      <div className="field"><label>House / Flat No.</label><input required {...f("houseNo")} /></div>
+                      <div className="field"><label>Area / Street</label><input required {...f("area")} /></div>
+                    </div>
+                    <div className="form-2col">
+                      <div className="field">
+                        <label>City</label>
+                        <input
+                          value={form.city}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              city: e.target.value,
+                            })
+                          }
+                          placeholder="Enter City / Town / Village"
+                        />
+                      </div>
+                    </div>
 
-                <div className="field">
-                  <label>Pincode</label>
+                    <div className="form-2col">
+                      <div className="field">
+                        <label>District</label>
+                        <input
+                          value={form.district}
+                          readOnly
+                        />
+                      </div>
 
-                  <input
-                    required
-                    value={form.pincode}
-                    maxLength={6}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "");
+                      <div className="field">
+                        <label>State</label>
+                        <input
+                          value={form.state}
+                          readOnly
+                        />
+                      </div>
+                    </div>
 
-                      setForm({
-                        ...form,
-                        pincode: value,
-                      });
+                    <div className="field">
+                      <label>Pincode</label>
 
-                      verifyPincode(value);
-                    }}
-                  />
+                      <input
+                        required
+                        value={form.pincode}
+                        maxLength={6}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
 
-                  {pinLoading && (
-                    <small style={{ color: "#666" }}>
-                      Checking PIN code...
-                    </small>
-                  )}
+                          setForm({
+                            ...form,
+                            pincode: value,
+                          });
 
-                  {!pinLoading && pinValid === true && (
-                    <small style={{ color: "green" }}>
-                      ✓ {pinMessage}
-                    </small>
-                  )}
+                          verifyPincode(value);
+                        }}
+                      />
 
-                  {!pinLoading && pinValid === false && (
-                    <small style={{ color: "red" }}>
-                      ✗ {pinMessage}
-                    </small>
-                  )}
-                </div>
+                      {pinLoading && (
+                        <small style={{ color: "#666" }}>
+                          Checking PIN code...
+                        </small>
+                      )}
 
-                <div className="field">
-                  <label>Address Type</label>
-                  <select {...f("addressType")}>
-                    <option>Home</option><option>Work</option><option>Other</option>
-                  </select>
-                </div>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button className="btn">Save Address</button>
-                  {addresses.length > 0 && <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>}
-                </div>
-              </form>
+                      {!pinLoading && pinValid === true && (
+                        <small style={{ color: "green" }}>
+                          ✓ {pinMessage}
+                        </small>
+                      )}
+
+                      {!pinLoading && pinValid === false && (
+                        <small style={{ color: "red" }}>
+                          ✗ {pinMessage}
+                        </small>
+                      )}
+                    </div>
+
+                    <div className="field">
+                      <label>Address Type</label>
+                      <select {...f("addressType")}>
+                        <option>Home</option><option>Work</option><option>Other</option>
+                      </select>
+                    </div>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <button className="btn">Save Address</button>
+                      {addresses.length > 0 && <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>}
+                    </div>
+                  </form>
+
+                )}
+              </>
             )}
 
             {/* Payment */}

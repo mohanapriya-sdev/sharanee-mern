@@ -297,9 +297,14 @@ export default function ProductDetail() {
   const oos = product.stockStatus === "Out of Stock";
   const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : 0;
 
-  const guard = () => { if (!user) { toast.info("Please sign in first."); navigate("/login"); return false; } return true; };
+  const guard = () => {
+    if (!user) {
+      toast.info("Please sign in first.");
+      navigate("/login"); return false;
+    } return true;
+  };
+
   const bag = async () => {
-    if (!guard()) return;
     if (oos) return toast.error("Sold out.");
 
     if (selectedColor?.sizes?.length > 0 && !selectedSize) {
@@ -308,19 +313,19 @@ export default function ProductDetail() {
 
     try {
       await addToCart(
-        product._id,
+        product,
         qty,
         selectedColor?.colorName,
         selectedSize
       );
 
-      toast.success("Added to bag.");
+      toast.success("Added to cart.");
     } catch {
       toast.error("Could not add.");
     }
   };
+
   const buyNow = async () => {
-    if (!guard()) return;
     if (oos) return toast.error("Sold out.");
 
     if (selectedColor?.sizes?.length > 0 && !selectedSize) {
@@ -329,7 +334,7 @@ export default function ProductDetail() {
 
     try {
       await addToCart(
-        product._id,
+        product,
         qty,
         selectedColor?.colorName,
         selectedSize
@@ -340,6 +345,7 @@ export default function ProductDetail() {
       toast.error("Could not proceed.");
     }
   };
+
   const wish = async () => {
     if (!guard()) return; try {
       await addToWishlist(
@@ -741,21 +747,29 @@ export default function ProductDetail() {
                   <div className="review-top">
 
                     <div className="review-user">
-
                       <div className="avatar">
-
-                        {r.user?.fullName?.charAt(0)}
-
+                        {(r.user?.fullName || r.guestName || "G").charAt(0).toUpperCase()}
                       </div>
 
                       <div>
+                        <b>
+                          {r.user?.fullName || r.guestName || "Guest"}
+                          {" "}
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "#b8893b",
+                              fontWeight: 500,
+                            }}
+                          >
+                            (
+                            {r.user ? "Customer" : "Guest"}
+                            )
+                          </span>
+                        </b>
 
-                        <b>{r.user?.fullName}</b>
-
-                        <p>Verified Customer</p>
-
+                        <p>Verified {r.user ? "Customer" : "Guest"}</p>
                       </div>
-
                     </div>
 
                     <div className="stars">
@@ -800,7 +814,7 @@ export default function ProductDetail() {
 
               ))}
 
-           
+
 
               {canReview ? (
                 <div className="write-review">

@@ -9,8 +9,8 @@ const {
 } = require("../controllers/addressController");
 const { protect } = require("../middleware/auth");
 
-router.post("/", protect, addAddress); 
-router.get("/verify-pincode/:pincode", protect, verifyPincode);
+router.post("/", addAddress);
+router.get("/verify-pincode/:pincode", verifyPincode);
 router.get("/:userId", protect, getAddresses);
 router.put("/:id", protect, updateAddress);
 

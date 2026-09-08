@@ -2804,3 +2804,22 @@
   letter-spacing: 3px;
   font-size: 15px;
 }
+
+.customer-badge,
+.guest-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.customer-badge {
+  background: #dff5e3;
+  color: #2e7d32;
+}
+
+.guest-badge {
+  background: #ffe6c7;
+  color: #d17b00;
+}

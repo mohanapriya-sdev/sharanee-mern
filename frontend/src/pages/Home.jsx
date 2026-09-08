@@ -82,6 +82,8 @@ export default function Home() {
         ]);
         setFeatured((f.data.products || []).slice(0, 4));
         setLatest((l.data.products || []).slice(0, 8));
+        console.log("Featured Products:", f.data.products);
+        console.log("Latest Products:", l.data.products);
         setCats(c.data.categories || []);
         setTestimonials(r.data.reviews || []);
       } catch {
@@ -131,7 +133,15 @@ export default function Home() {
     name: color,
     img: COLOR_IMAGES[color],
   }));
+  const colorProductMap = {};
 
+  [...featured, ...latest].forEach((product) => {
+    product.colorVariants?.forEach((variant) => {
+      if (!colorProductMap[variant.colorName]) {
+        colorProductMap[variant.colorName] = product._id;
+      }
+    });
+  });
   /* PINS FROM BACKEND */
   /* PINS */
   const backendPinTiles = cats
@@ -168,7 +178,13 @@ export default function Home() {
     };
   });
 
+  const pinProductMap = {};
 
+  [...featured, ...latest].forEach((product) => {
+    if (product.productType === "Pins") {
+      pinProductMap[product.productName.toLowerCase()] = product._id;
+    }
+  });
   return (
     <>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
@@ -225,7 +241,11 @@ export default function Home() {
           <div className="cat-grid">
             {colorTiles.map((c, i) => (
               <Link
-                to={`/shop?color=${encodeURIComponent(c.name)}`}
+                to={
+                  colorProductMap[c.name]
+                    ? `/product/${colorProductMap[c.name]}?color=${encodeURIComponent(c.name)}`
+                    : "/shop"
+                }
                 className="cat-tile"
                 key={i}
               >
@@ -252,7 +272,11 @@ export default function Home() {
           <div className="cat-grid">
             {pinTiles.map((pin, i) => (
               <Link
-                to={`/shop?group=pins&category=${encodeURIComponent(pin.name)}`}
+                to={
+                  pinProductMap[pin.name.toLowerCase()]
+                    ? `/product/${pinProductMap[pin.name.toLowerCase()]}`
+                    : "/shop"
+                }
                 className="cat-tile"
                 key={pin.id || i}
               >
@@ -384,10 +408,30 @@ export default function Home() {
                 <div className="testi">
                   <div className="testi-top">
                     <div className="testi-name">
-                      {t.user?.fullName}
-                      <small>
-                        {new Date(t.createdAt).toLocaleDateString()}
-                      </small>
+                      {t.user?.fullName || t.guestName || "Guest Customer"}
+
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          marginTop: "4px",
+                        }}
+                      >
+                        <span
+                          className={
+                            t.user
+                              ? "customer-badge"
+                              : "guest-badge"
+                          }
+                        >
+                          {t.user ? "Customer" : "Guest"}
+                        </span>
+
+                        <small>
+                          {new Date(t.createdAt).toLocaleDateString()}
+                        </small>
+                      </div>
                     </div>
 
                     <div className="testi-stars">

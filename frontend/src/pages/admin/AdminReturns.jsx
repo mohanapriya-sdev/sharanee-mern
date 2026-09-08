@@ -195,11 +195,15 @@ export default function AdminReturns() {
                                 <tr key={item._id}>
                                     <td>
                                         <strong>
-                                            {item.user?.fullName || "—"}
+                                            {item.user?.fullName ||
+                                                item.order?.guestDetails?.fullName ||
+                                                "Guest Customer"}
                                         </strong>
 
                                         <small>
-                                            {item.user?.email || ""}
+                                            {item.user?.email ||
+                                                item.order?.guestDetails?.email ||
+                                                "-"}
                                         </small>
                                     </td>
 
@@ -273,7 +277,9 @@ export default function AdminReturns() {
                         <div className="return-admin-info">
                             <p>
                                 <strong>Customer:</strong>{" "}
-                                {selectedReturn.user?.fullName || "—"}
+                                {selectedReturn.user?.fullName ||
+                                    selectedReturn.order?.guestDetails?.fullName ||
+                                    "Guest Customer"}
                             </p>
 
                             <p>

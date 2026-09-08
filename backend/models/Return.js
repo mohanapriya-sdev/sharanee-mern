@@ -5,9 +5,12 @@ const returnSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
-
+    
+    guestMobile: {
+      type: String,
+    },
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",

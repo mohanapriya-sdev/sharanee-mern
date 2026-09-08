@@ -9,7 +9,19 @@ export default function OrderSuccess() {
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
-    orderApi.get(id).then((r) => setOrder(r.data.order)).catch(() => { });
+    const guestMobile = localStorage.getItem("guestMobile");
+
+    if (guestMobile) {
+      orderApi
+        .guestOrder(guestMobile, id)
+        .then((r) => setOrder(r.data.order))
+        .catch(() => { });
+    } else {
+      orderApi
+        .get(id)
+        .then((r) => setOrder(r.data.order))
+        .catch(() => { });
+    }
   }, [id]);
 
   return (
@@ -34,7 +46,17 @@ export default function OrderSuccess() {
           </div>
         )}
         <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 10 }}>
-          <button onClick={() => navigate("/orders")}>
+          <button
+            onClick={() => {
+              const guestMobile = localStorage.getItem("guestMobile");
+
+              if (guestMobile) {
+                navigate(`/guest-orders/${guestMobile}`);
+              } else {
+                navigate("/orders");
+              }
+            }}
+          >
             View My Orders
           </button>
           <Link to="/shop" className="btn btn-outline">Continue Shopping</Link>

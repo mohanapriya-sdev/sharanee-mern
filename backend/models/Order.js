@@ -15,8 +15,31 @@ const orderSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
     },
+
+    guestDetails: {
+      fullName: String,
+      email: String,
+      mobile: String,
+      alternateMobile: String,
+      houseNo: String,
+      area: String,
+      landmark: String,
+      city: String,
+      district: String,
+      state: String,
+      pincode: String,
+      addressType: String,
+    },
+
+    guestToken: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    
+
     items: [
       {
         product: {
@@ -50,9 +73,17 @@ const orderSchema = new mongoose.Schema(
     ],
 
     shippingAddress: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Address",
-      required: true,
+      fullName: String,
+      mobile: String,
+      alternateMobile: String,
+      houseNo: String,
+      area: String,
+      landmark: String,
+      city: String,
+      district: String,
+      state: String,
+      pincode: String,
+      addressType: String,
     },
 
     totalAmount: {

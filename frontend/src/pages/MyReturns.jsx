@@ -14,17 +14,21 @@ export default function MyReturns() {
     useEffect(() => {
         const loadReturns = async () => {
             try {
-                setLoading(true);
+                let response;
 
-                const response = await returnApi.myReturns();
+                if (guestMobile && !user?.id) {
+                    response = await returnApi.guestReturns(guestMobile);
+                } else if (user?.id) {
+                    response = await returnApi.myReturns();
+                } else {
+                    setMyReturns([]);
+                    return;
+                }
 
-                setReturns(response.data.returns || []);
+                setMyReturns(response.data.returns || []);
             } catch (error) {
-                console.error(error);
-                toast.error("Could not load return details.");
-                setReturns([]);
-            } finally {
-                setLoading(false);
+                console.error("Could not load returns:", error);
+                setMyReturns([]);
             }
         };
 

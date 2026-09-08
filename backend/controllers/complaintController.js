@@ -1,5 +1,62 @@
 const Complaint = require("../models/Complaint");
 const Notification = require("../models/Notification");
+const Order = require("../models/Order");
+
+
+// GUEST: Create complaint
+exports.createGuestComplaint = async (req, res) => {
+    try {
+        const { guestMobile, complaint, order } = req.body;
+
+        if (!guestMobile || !complaint || !complaint.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Guest mobile and complaint are required",
+            });
+        }
+
+        const guestOrder = await Order.findOne({
+            _id: order,
+            "guestDetails.mobile": guestMobile,
+        });
+
+        if (!guestOrder) {
+            return res.status(404).json({
+                success: false,
+                message: "Guest order not found",
+            });
+        }
+
+        console.log("Guest Details:", guestOrder.guestDetails);
+        console.log("Saving Complaint:", {
+            guestMobile,
+            guestName: guestOrder.guestDetails?.fullName,
+            guestEmail: guestOrder.guestDetails?.email,
+        });
+
+        const newComplaint = await Complaint.create({
+            guestMobile,
+            guestName: guestOrder.guestDetails?.fullName || "Guest Customer",
+            guestEmail: guestOrder.guestDetails?.email || "",
+            order,
+            complaint: complaint.trim(),
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Complaint submitted successfully",
+            complaint: newComplaint,
+        });
+    } catch (error) {
+        console.error("Create guest complaint error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not submit complaint",
+        });
+    }
+};
+
 
 // CUSTOMER: Create complaint
 exports.createComplaint = async (req, res) => {
@@ -49,6 +106,38 @@ exports.getMyComplaints = async (req, res) => {
         });
     } catch (error) {
         console.error("Get complaints error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not load complaints",
+        });
+    }
+};
+
+// GUEST: Get my complaints
+exports.getGuestComplaints = async (req, res) => {
+    try {
+        const { guestMobile } = req.body;
+
+        if (!guestMobile) {
+            return res.status(400).json({
+                success: false,
+                message: "Guest mobile is required",
+            });
+        }
+
+        const complaints = await Complaint.find({
+            guestMobile,
+        })
+            .populate("order")
+            .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            complaints,
+        });
+    } catch (error) {
+        console.error("Get guest complaints error:", error);
 
         res.status(500).json({
             success: false,

@@ -211,10 +211,24 @@ export default function AdminOrders() {
   if (normalizedSearch) {
     filteredOrders = filteredOrders.filter((order) => {
       const customerName =
-        order.user?.fullName?.toLowerCase() || "";
+        (
+          order.user?.fullName ||
+          order.guestDetails?.fullName ||
+          ""
+        ).toLowerCase();
 
       const customerEmail =
-        order.user?.email?.toLowerCase() || "";
+        (
+          order.user?.email ||
+          ""
+        ).toLowerCase();
+
+      const customerMobile =
+        (
+          order.user?.phone ||
+          order.guestDetails?.mobile ||
+          ""
+        ).toLowerCase();
 
       const orderId =
         order._id?.toLowerCase() || "";
@@ -222,6 +236,7 @@ export default function AdminOrders() {
       return (
         customerName.includes(normalizedSearch) ||
         customerEmail.includes(normalizedSearch) ||
+        customerMobile.includes(normalizedSearch) ||
         orderId.includes(normalizedSearch)
       );
     });
@@ -286,6 +301,8 @@ export default function AdminOrders() {
     firstIndex,
     lastIndex
   );
+
+  console.log("Current Orders:", currentOrders);
 
   const getOrderBadgeClass = (orderStatus) => {
     switch (orderStatus) {
@@ -410,68 +427,77 @@ export default function AdminOrders() {
                 </td>
               </tr>
             ) : currentOrders.length > 0 ? (
-              currentOrders.map((order) => (
-                <tr key={order._id}>
-                  <td>
-                    #{order._id.slice(-8).toUpperCase()}
+              currentOrders.map((order) => {
+                console.log("Order:", order);
+                console.log("Guest Details:", order.guestDetails);
 
-                    <br />
+                return (
+                  <tr key={order._id}>
+                    <td>
+                      #{order._id.slice(-8).toUpperCase()}
 
-                    <small style={{ color: "var(--muted)" }}>
-                      {new Date(
-                        order.createdAt
-                      ).toLocaleDateString("en-IN")}
-                    </small>
-                  </td>
+                      <br />
 
-                  <td>
-                    {order.user?.fullName || "—"}
+                      <small style={{ color: "var(--muted)" }}>
+                        {new Date(
+                          order.createdAt
+                        ).toLocaleDateString("en-IN")}
+                      </small>
+                    </td>
 
-                    <br />
+                    <td>
+                      {order.user?.fullName ||
+                        order.guestDetails?.fullName ||
+                        "Guest Customer"}
 
-                    <small style={{ color: "var(--muted)" }}>
-                      {order.user?.email || ""}
-                    </small>
-                  </td>
+                      <br />
 
-                  <td>{order.items?.length || 0}</td>
+                      <small style={{ color: "var(--muted)" }}>
+                        {order.user?.email ||
+                          order.guestDetails?.mobile ||
+                          ""}
+                      </small>
+                    </td>
 
-                  <td>
-                    Rs.{" "}
-                    {Number(
-                      order.finalAmount ??
-                      order.totalAmount ??
-                      0
-                    ).toLocaleString("en-IN")}
-                  </td>
+                    <td>{order.items?.length || 0}</td>
 
-                  <td>{order.paymentMethod || "—"}</td>
+                    <td>
+                      Rs.{" "}
+                      {Number(
+                        order.finalAmount ??
+                        order.totalAmount ??
+                        0
+                      ).toLocaleString("en-IN")}
+                    </td>
 
-                  <td>
+                    <td>{order.paymentMethod || "—"}</td>
 
-                    <span
-                      className={`order-badge ${getOrderBadgeClass(
-                        order.orderStatus
-                      )}`}
-                      onClick={() => openOrder(order)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {order.orderStatus || "Placed"}
-                    </span>
-                  </td>
+                    <td>
 
-                  <td>
-                    <button
-                      type="button"
-                      className="icon-btn view"
-                      title="View"
-                      onClick={() => openOrder(order)}
-                    >
-                      <FaEye size={15} />
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      <span
+                        className={`order-badge ${getOrderBadgeClass(
+                          order.orderStatus
+                        )}`}
+                        onClick={() => openOrder(order)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {order.orderStatus || "Placed"}
+                      </span>
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className="icon-btn view"
+                        title="View"
+                        onClick={() => openOrder(order)}
+                      >
+                        <FaEye size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td
@@ -566,7 +592,9 @@ export default function AdminOrders() {
                   <input
                     readOnly
                     value={
-                      selectedOrder.user?.fullName || ""
+                      selectedOrder.user?.fullName ||
+                      selectedOrder.guestDetails?.fullName ||
+                      "Guest Customer"
                     }
                   />
                 </div>
@@ -577,7 +605,9 @@ export default function AdminOrders() {
                   <input
                     readOnly
                     value={
-                      selectedOrder.user?.email || ""
+                      selectedOrder.user?.email ||
+                      selectedOrder.guestDetails?.mobile ||
+                      ""
                     }
                   />
                 </div>
