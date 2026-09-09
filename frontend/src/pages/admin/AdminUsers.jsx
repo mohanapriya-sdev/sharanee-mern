@@ -274,14 +274,12 @@ export default function AdminUsers() {
 
 
       <div className="pagination">
-
         <button
+          className="page-nav"
           disabled={currentPage === 1}
-          onClick={() => setCurrentPage(currentPage - 1)}
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
         >
-
-          Previous
-
+          &lt;
         </button>
 
         {Array.from({ length: totalPages }, (_, index) => (
@@ -299,12 +297,13 @@ export default function AdminUsers() {
         ))}
 
         <button
+          className="page-nav"
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(currentPage + 1)}
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
         >
-
-          Next
-
+          &gt;
         </button>
 
       </div>

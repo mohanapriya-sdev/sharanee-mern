@@ -436,17 +436,14 @@ export default function AdminDiscounts() {
             </table>
 
             <div className="pagination">
-
                 <button
-
+                    className="page-nav"
                     disabled={currentPage === 1}
-
-                    onClick={() => setCurrentPage(currentPage - 1)}
-
+                    onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                 >
-
-                    Previous
-
+                    &lt;
                 </button>
 
                 {Array.from(
@@ -478,15 +475,15 @@ export default function AdminDiscounts() {
                 )}
 
                 <button
-
+                    className="page-nav"
                     disabled={currentPage === totalPages}
-
-                    onClick={() => setCurrentPage(currentPage + 1)}
-
+                    onClick={() =>
+                        setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                        )
+                    }
                 >
-
-                    Next
-
+                    &gt;
                 </button>
 
             </div>

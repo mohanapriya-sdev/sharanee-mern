@@ -516,6 +516,7 @@ export default function AdminOrders() {
           <div className="pagination">
             <button
               type="button"
+              className="page-arrow"
               disabled={safeCurrentPage === 1}
               onClick={() =>
                 setCurrentPage((page) =>
@@ -523,7 +524,7 @@ export default function AdminOrders() {
                 )
               }
             >
-              Previous
+              &lt;
             </button>
 
             {Array.from(
@@ -548,6 +549,7 @@ export default function AdminOrders() {
 
             <button
               type="button"
+              className="page-arrow"
               disabled={safeCurrentPage === totalPages}
               onClick={() =>
                 setCurrentPage((page) =>
@@ -555,7 +557,7 @@ export default function AdminOrders() {
                 )
               }
             >
-              Next
+              &gt;
             </button>
           </div>
         )

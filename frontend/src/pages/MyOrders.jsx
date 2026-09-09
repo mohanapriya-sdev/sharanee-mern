@@ -29,9 +29,15 @@ export default function MyOrders() {
 
   const guestMobile = localStorage.getItem("guestMobile");
 
+  console.log("guestMobile:", guestMobile);
+  console.log("user:", user);
+
   const isGuest =
-    searchParams.get("guest") === "true" ||
-    !!guestMobile;
+    !user?.id &&
+    (
+      searchParams.get("guest") === "true" ||
+      !!guestMobile
+    );
   const [returningItem, setReturningItem] = useState(null);
   const [returnReason, setReturnReason] = useState("");
   const [submittingReturn, setSubmittingReturn] = useState(false);
@@ -104,24 +110,19 @@ export default function MyOrders() {
   };
 
   const loadReturns = async () => {
-    console.log("guestMobile:", guestMobile);
-    console.log("user:", user);
-
     try {
       let response;
 
-      if (guestMobile) {
-        console.log("Calling Guest Returns API");
-        response = await returnApi.guestReturns(guestMobile);
-      } else if (user?.id) {
-        console.log("Calling Customer Returns API");
+      if (user?.id) {
+        // Customer
         response = await returnApi.myReturns();
+      } else if (guestMobile) {
+        // Guest
+        response = await returnApi.guestReturns(guestMobile);
       } else {
         setMyReturns([]);
         return;
       }
-
-      console.log("Returns Response:", response.data);
 
       setMyReturns(response.data.returns || []);
     } catch (err) {
@@ -132,7 +133,15 @@ export default function MyOrders() {
 
   const loadComplaints = async () => {
     try {
-      // Guest
+      // CUSTOMER
+      if (user?.id) {
+        const response = await complaintApi.myComplaints();
+
+        setMyComplaints(response.data.complaints || []);
+        return;
+      }
+
+      // GUEST
       if (guestMobile) {
         const response = await complaintApi.guestComplaints(guestMobile);
 
@@ -140,20 +149,13 @@ export default function MyOrders() {
         return;
       }
 
-      // Customer
-      if (!user?.id) {
-        setMyComplaints([]);
-        return;
-      }
-
-      const response = await complaintApi.myComplaints();
-
-      setMyComplaints(response.data.complaints || []);
+      setMyComplaints([]);
     } catch (error) {
       console.error("Could not load complaints:", error);
       setMyComplaints([]);
     }
   };
+
   const loadRecommendedProducts = async () => {
     try {
       const response = await productApi.list();
@@ -239,9 +241,6 @@ export default function MyOrders() {
 
     try {
       setSubmittingCancel(true);
-
-
-
       if (guestMobile) {
         await orderApi.guestCancel(
           guestMobile,
@@ -312,7 +311,7 @@ export default function MyOrders() {
       console.log("guestMobile =", guestMobile);
       console.log("returningItem =", returningItem);
 
-      if (guestMobile) {
+      if (guestMobile && !user?.id) {
         console.log("Calling Guest Return API");
 
         try {
@@ -374,7 +373,7 @@ export default function MyOrders() {
 
       const formData = new FormData();
 
-      if (guestMobile) {
+      if (guestMobile && !user?.id) {
         formData.append("guestMobile", guestMobile);
       } else {
         formData.append("user", user.id);
@@ -388,21 +387,20 @@ export default function MyOrders() {
         formData.append("images", img);
       });
 
-      if (guestMobile) {
-
+      if (guestMobile && !user?.id) {
+        console.log("guestMobile =", formData.get("guestMobile"));
+        console.log("product =", formData.get("product"));
+        console.log("rating =", formData.get("rating"));
+        console.log("review =", formData.get("review"));
 
         await reviewApi.guestAdd(formData);
       } else {
-        formData.append("user", user.id);
+
 
         if (editingReviewId) {
           await reviewApi.update(editingReviewId, formData);
         } else {
-          if (guestMobile) {
-            await reviewApi.guest(formData);
-          } else {
-            await reviewApi.add(formData);
-          }
+          await reviewApi.add(formData);
         }
       }
 
@@ -430,13 +428,17 @@ export default function MyOrders() {
     return <div className="spinner" />;
   }
 
-
   const filteredOrders =
     selectedStatus === "All Orders"
-      ? orders
+      ? [...orders]
       : orders.filter(
         (order) => order.orderStatus === selectedStatus
       );
+
+  filteredOrders.sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+  
   const handleWishlist = async (product) => {
     if (!user?.id) {
       toast.error("Please login to use wishlist.");
@@ -460,7 +462,6 @@ export default function MyOrders() {
     }
   };
 
-
   const getTrackingDate = (order, status) => {
     const history = order.trackingHistory?.find(
       (item) => item.status === status
@@ -472,6 +473,19 @@ export default function MyOrders() {
       day: "numeric",
       month: "short",
     });
+  };
+
+  const downloadInvoice = async (orderId) => {
+    try {
+      if (guestMobile) {
+        await invoiceApi.guestDownload(orderId, guestMobile);
+      } else {
+        await invoiceApi.download(orderId);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not download invoice.");
+    }
   };
 
   return (
@@ -508,6 +522,11 @@ export default function MyOrders() {
           </div>
         ) : (
           filteredOrders.map((order) => {
+
+            console.log("ORDER ID:", order._id);
+            console.log("MY RETURNS:", myReturns);
+
+
             const isDelivered = order.orderStatus === "Delivered";
             const isCancelled = order.orderStatus === "Cancelled";
             const orderReturn = myReturns.find((r) => {
@@ -516,6 +535,9 @@ export default function MyOrders() {
 
               return String(returnOrderId) === String(order._id);
             });
+
+            console.log("MATCHED RETURN:", orderReturn);
+
 
             const canCancel = ![
               "Delivered",
@@ -857,7 +879,7 @@ export default function MyOrders() {
                   <Link
                     className="btn btn-outline"
                     to={
-                      guestMobile
+                      !user?.id && guestMobile
                         ? `/orders/${order._id}/track?guest=true`
                         : `/orders/${order._id}/track`
                     }
@@ -1116,14 +1138,48 @@ export default function MyOrders() {
                           type="button"
                           className="help-link"
                           onClick={async () => {
-                            if (guestMobile) {
-                              const res = await complaintApi.guestComplaints(guestMobile);
-                              const complaints = res.data.complaints || [];
+                            try {
+                              let complaints = [];
+
+                              // CUSTOMER FIRST
+                              if (user?.id) {
+                                const res = await complaintApi.myComplaints();
+                                complaints = res.data.complaints || [];
+                              }
+                              // GUEST
+                              else if (guestMobile) {
+                                const res = await complaintApi.guestComplaints(guestMobile);
+                                complaints = res.data.complaints || [];
+                              }
+                              else {
+                                toast.error("Please login or place a guest order.");
+                                return;
+                              }
 
                               setMyComplaints(complaints);
-                              setSelectedComplaint(complaints[0] || null);
-                            } else {
-                              await loadComplaints();
+
+                              // Show complaint for the current order
+                              const orderComplaint = complaints.find((c) => {
+                                const complaintOrderId =
+                                  typeof c.order === "object"
+                                    ? c.order?._id
+                                    : c.order;
+
+                                return String(complaintOrderId) === String(order._id);
+                              });
+
+                              if (orderComplaint) {
+                                setSelectedComplaint(orderComplaint);
+                              } else {
+                                toast.error("No complaints found for this order.");
+                              }
+                            } catch (error) {
+                              console.error("Complaint status error:", error);
+
+                              toast.error(
+                                error.response?.data?.message ||
+                                "Could not load complaint status."
+                              );
                             }
                           }}
                         >
@@ -1669,13 +1725,27 @@ export default function MyOrders() {
                       toast.error("Please enter your complaint.");
                       return;
                     }
-
                     try {
-                      await complaintApi.guestCreate({
-                        order: complaintOrder._id,
-                        guestMobile,
-                        complaint: complaintText,
-                      });
+                      // Customer
+                      if (user?.id) {
+                        await complaintApi.create({
+                          order: complaintOrder._id,
+                          complaint: complaintText,
+                        });
+                      }
+                      // Guest
+                      else if (guestMobile) {
+                        await complaintApi.guestCreate({
+                          order: complaintOrder._id,
+                          guestMobile,
+                          complaint: complaintText,
+                        });
+                      }
+                      // Neither logged in nor guest
+                      else {
+                        toast.error("Please login or place a guest order first.");
+                        return;
+                      }
 
                       toast.success("Your complaint has been submitted successfully.");
 

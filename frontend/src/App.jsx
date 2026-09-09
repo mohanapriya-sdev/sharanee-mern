@@ -71,6 +71,7 @@ export default function App() {
       <Route path="/checkout" element={P(<Checkout />)} />
       <Route path="/order-success/:id" element={P(<OrderSuccess />)} />
       <Route path="/guest-orders" element={P(<MyOrders />)} />
+      <Route path="/guest-orders/:mobile" element={P(<MyOrders />)} />
       <Route path="/orders" element={P(<MyOrders />)} />
       <Route path="/orders/:id/track" element={P(<OrderTracking />)} />
       <Route path="/account" element={P(<RequireAuth><Account /></RequireAuth>)} />

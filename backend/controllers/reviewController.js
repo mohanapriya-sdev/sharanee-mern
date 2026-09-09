@@ -26,11 +26,17 @@ const addReview = asyncHandler(async (req, res) => {
   }
 
   // Check if customer has a delivered order for this product
+  console.log("Review Request");
+  console.log("User:", user);
+  console.log("Product:", product);
+
   const deliveredOrder = await Order.findOne({
     user,
     orderStatus: "Delivered",
     "items.product": product,
   });
+
+  console.log("Delivered Order:", deliveredOrder);
 
   if (!deliveredOrder) {
     return res.status(403).json({
@@ -43,6 +49,10 @@ const addReview = asyncHandler(async (req, res) => {
     user,
     product,
   });
+
+  console.log("Existing Review:", existingReview);
+  console.log("User:", user);
+  console.log("Product:", product);
 
   if (existingReview) {
     return res.status(400).json({
@@ -74,6 +84,12 @@ const addReview = asyncHandler(async (req, res) => {
 const addGuestReview = asyncHandler(async (req, res) => {
   const { guestMobile, product, rating, review } = req.body;
 
+  console.log("========== GUEST REVIEW ==========");
+  console.log("Body:", req.body);
+  console.log("Guest Mobile:", guestMobile);
+  console.log("Product:", product);
+  console.log("Rating:", rating);
+
   const images = req.files?.map((file) => file.path) || [];
 
   if (!guestMobile || !product || !rating) {
@@ -87,6 +103,8 @@ const addGuestReview = asyncHandler(async (req, res) => {
     orderStatus: "Delivered",
     "items.product": product,
   });
+
+  console.log("Delivered Order:", deliveredOrder);
 
   if (!deliveredOrder) {
     return res.status(403).json({

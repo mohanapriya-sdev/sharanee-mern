@@ -116,7 +116,10 @@ const myReturns = asyncHandler(async (req, res) => {
 const allReturns = asyncHandler(async (req, res) => {
   const returns = await Return.find()
     .populate("user", "fullName email phone")
-    .populate("order")
+    .populate({
+      path: "order",
+      select: "guestDetails items trackingId",
+    })
     .populate("product", "productName price discountPrice images")
     .sort({ createdAt: -1 });
 
@@ -124,11 +127,13 @@ const allReturns = asyncHandler(async (req, res) => {
   console.log(JSON.stringify(returns[0], null, 2));
 
   console.log("TOTAL RETURNS:", returns.length);
+
   console.log(
-    returns.map(r => ({
+    returns.map((r) => ({
       id: r._id,
       guestMobile: r.guestMobile,
       user: r.user,
+      guestDetails: r.order?.guestDetails,
       product: r.product?.productName,
     }))
   );

@@ -358,16 +358,18 @@ export default function AdminReturns() {
             )}
             <div className="pagination">
                 <button
-                    onClick={() => setCurrentPage(currentPage - 1)}
+                    className="page-nav"
                     disabled={currentPage === 1}
+                    onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                 >
-                    Previous
+                    &lt;
                 </button>
 
                 {Array.from({ length: totalPages }, (_, i) => (
                     <button
-                        key={i + 1}
-                        className={currentPage === i + 1 ? "active" : ""}
+                        className={currentPage === i + 1 ? "active-page" : ""}
                         onClick={() => setCurrentPage(i + 1)}
                     >
                         {i + 1}
@@ -375,12 +377,15 @@ export default function AdminReturns() {
                 ))}
 
                 <button
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={
-                        currentPage === totalPages || totalPages === 0
+                    className="page-nav"
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                        setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                        )
                     }
                 >
-                    Next
+                    &gt;
                 </button>
             </div>
         </div>

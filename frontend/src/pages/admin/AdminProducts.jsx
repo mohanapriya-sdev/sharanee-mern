@@ -649,40 +649,32 @@ export default function AdminProducts() {
       </table>
 
       <div className="pagination">
-
         <button
+          className="page-btn"
           disabled={currentPage === 1}
-          onClick={() => setCurrentPage(currentPage - 1)}
+          onClick={() => setCurrentPage((p) => p - 1)}
         >
-          Previous
+          &lt;
         </button>
 
-        {Array.from(
-          { length: totalPages },
-          (_, index) => (
-            <button
-              key={index}
-              className={
-                currentPage === index + 1
-                  ? "active-page"
-                  : ""
-              }
-              onClick={() =>
-                setCurrentPage(index + 1)
-              }
-            >
-              {index + 1}
-            </button>
-          )
-        )}
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index}
+            className={`page-btn ${currentPage === index + 1 ? "active-page" : ""
+              }`}
+            onClick={() => setCurrentPage(index + 1)}
+          >
+            {index + 1}
+          </button>
+        ))}
 
         <button
+          className="page-btn"
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(currentPage + 1)}
+          onClick={() => setCurrentPage((p) => p + 1)}
         >
-          Next
+          &gt;
         </button>
-
       </div>
 
       {open && (

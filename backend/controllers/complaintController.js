@@ -200,13 +200,15 @@ exports.updateComplaintStatus = async (req, res) => {
         complaint.status = status;
         await complaint.save();
 
-        // Create notification for customer
-        await Notification.create({
-            user: complaint.customer,
-            title: "Complaint Status Updated",
-            message: `Your complaint status has been updated to ${status}.`,
-            type: "complaint",
-        });
+        // Create notification only for logged-in customers
+        if (complaint.customer) {
+            await Notification.create({
+                user: complaint.customer,
+                title: "Complaint Status Updated",
+                message: `Your complaint status has been updated to ${status}.`,
+                type: "complaint",
+            });
+        }
 
         res.json({
             success: true,

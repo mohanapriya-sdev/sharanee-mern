@@ -2,27 +2,31 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { orderApi } from "../api/endpoints";
 import { Icon } from "../components/Icons";
+import { useAuth } from "../context/AuthContext";
 
 export default function OrderSuccess() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const guestMobile = localStorage.getItem("guestMobile");
-
-    if (guestMobile) {
-      orderApi
-        .guestOrder(guestMobile, id)
-        .then((r) => setOrder(r.data.order))
-        .catch(() => { });
-    } else {
+    if (user) {
       orderApi
         .get(id)
         .then((r) => setOrder(r.data.order))
         .catch(() => { });
+    } else {
+      const guestMobile = localStorage.getItem("guestMobile");
+
+      if (guestMobile) {
+        orderApi
+          .guestOrder(guestMobile, id)
+          .then((r) => setOrder(r.data.order))
+          .catch(() => { });
+      }
     }
-  }, [id]);
+  }, [id, user]);
 
   return (
     <div className="page-wrap">
@@ -48,12 +52,14 @@ export default function OrderSuccess() {
         <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 10 }}>
           <button
             onClick={() => {
-              const guestMobile = localStorage.getItem("guestMobile");
-
-              if (guestMobile) {
-                navigate(`/guest-orders/${guestMobile}`);
-              } else {
+              if (user) {
                 navigate("/orders");
+              } else {
+                const guestMobile = localStorage.getItem("guestMobile");
+
+                if (guestMobile) {
+                  navigate(`/guest-orders/${guestMobile}`);
+                }
               }
             }}
           >

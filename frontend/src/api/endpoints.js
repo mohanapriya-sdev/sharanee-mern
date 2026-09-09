@@ -343,6 +343,30 @@ export const invoiceApi = {
 
     window.URL.revokeObjectURL(blobUrl);
   },
+
+  guestDownload: async (orderId, guestMobile) => {
+    const response = await api.post(
+      `/invoice/guest/${orderId}`,
+      { guestMobile },
+      {
+        responseType: "blob",
+      }
+    );
+
+    const blob = new Blob([response.data], {
+      type: "application/pdf",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `invoice-${orderId}.pdf`;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  },
+  
 };
 
 // ---------- Settings ----------

@@ -1144,6 +1144,426 @@ const downloadInvoice = asyncHandler(
   }
 );
 
+
+const downloadGuestInvoice = asyncHandler(async (req, res) => {
+  const { guestMobile } = req.body;
+
+
+  const order = await Order.findOne({
+    _id: req.params.orderId,
+    "guestDetails.mobile": guestMobile,
+  }).populate([
+    {
+      path: "items.product",
+      populate: {
+        path: "category",
+        select: "categoryName name",
+      },
+    },
+    {
+      path: "shippingAddress",
+    },
+  ]);
+
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+  }
+  const invoiceNumber =
+    createInvoiceNumber(order);
+
+  res.setHeader(
+    "Content-Type",
+    "application/pdf"
+  );
+
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="Sharanee-Invoice-${invoiceNumber}.pdf"`
+  );
+
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate"
+  );
+
+  const doc = new PDFDocument({
+    size: "A4",
+    margin: 0,
+    bufferPages: true,
+    info: {
+      Title: `Sharanee Tax Invoice ${invoiceNumber}`,
+      Author: "Sharanee Saree Inskirt",
+      Subject: `Invoice for order ${order._id}`,
+      Creator: "Sharanee",
+    },
+  });
+
+  doc.pipe(res);
+
+  const logoPath = path.join(
+    __dirname,
+    "..",
+    "assets",
+    "sharanee-logo.png"
+  );
+
+  /*
+   * Header
+   */
+  drawPageHeader(
+    doc,
+    order,
+    invoiceNumber,
+    logoPath
+  );
+
+  /*
+   * Address and summary section
+   */
+  const customerName =
+    order.user?.fullName ||
+    order.user?.name ||
+    order.shippingAddress?.fullName ||
+    "Customer";
+
+  const customerPhone =
+    order.user?.phone ||
+    order.user?.mobile ||
+    order.shippingAddress?.mobile ||
+    "";
+
+  const shippingLines =
+    getShippingAddressLines(
+      order.shippingAddress
+    );
+
+  const billingLines = [
+    customerPhone
+      ? `${customerName} · ${customerPhone}`
+      : customerName,
+    ...shippingLines.slice(1),
+  ];
+
+  const boxY = 165;
+  const boxHeight = 112;
+
+  drawAddressBox({
+    doc,
+    title: "Billed To",
+    lines: billingLines,
+    x: 40,
+    y: boxY,
+    width: 170,
+    height: boxHeight,
+  });
+
+  drawAddressBox({
+    doc,
+    title: "Shipping Address",
+    lines: shippingLines,
+    x: 210,
+    y: boxY,
+    width: 190,
+    height: boxHeight,
+  });
+
+  drawSummaryBox({
+    doc,
+    order,
+    x: 400,
+    y: boxY,
+    width: 155,
+    height: boxHeight,
+  });
+
+  /*
+   * Product table
+   */
+  const columns = [
+    {
+      label: "#",
+      x: 44,
+      width: 25,
+      align: "center",
+    },
+    {
+      label: "Product",
+      x: 75,
+      width: 132,
+    },
+    {
+      label: "Description",
+      x: 213,
+      width: 122,
+    },
+    {
+      label: "Qty",
+      x: 341,
+      width: 35,
+      align: "center",
+    },
+    {
+      label: "Unit Price",
+      x: 382,
+      width: 74,
+      align: "right",
+    },
+    {
+      label: "Total",
+      x: 462,
+      width: 86,
+      align: "right",
+    },
+  ];
+
+  let tableY = drawTableHeader(
+    doc,
+    294,
+    columns
+  );
+
+  order.items.forEach((item, index) => {
+    /*
+     * Add a new page if many products cause overflow.
+     */
+    if (tableY > 650) {
+      drawFooter(doc);
+
+      doc.addPage({
+        size: "A4",
+        margin: 0,
+      });
+
+      drawPageHeader(
+        doc,
+        order,
+        invoiceNumber,
+        logoPath
+      );
+
+      tableY = drawTableHeader(
+        doc,
+        165,
+        columns
+      );
+    }
+
+    tableY = drawProductRow({
+      doc,
+      item,
+      index,
+      y: tableY,
+      columns,
+    });
+  });
+
+  /*
+   * Invoice totals
+   */
+  const subtotal = Number(
+    order.totalAmount || 0
+  );
+
+  const discount = Number(
+    order.discount || 0
+  );
+
+  const finalAmount = Number(
+    order.finalAmount ||
+    Math.max(0, subtotal - discount)
+  );
+
+  const shippingCharge = Math.max(
+    0,
+    finalAmount - (subtotal - discount)
+  );
+
+  if (tableY > 570) {
+    drawFooter(doc);
+
+    doc.addPage({
+      size: "A4",
+      margin: 0,
+    });
+
+    drawPageHeader(
+      doc,
+      order,
+      invoiceNumber,
+      logoPath
+    );
+
+    tableY = 180;
+  }
+
+  const totalsX = 335;
+  const totalsWidth = 220;
+  const totalsY = tableY;
+
+  doc
+    .rect(
+      totalsX,
+      totalsY,
+      totalsWidth,
+      100
+    )
+    .fillAndStroke(
+      COLORS.cream,
+      COLORS.border
+    );
+
+  const totalRows = [
+    ["Subtotal", subtotal],
+    ["Shipping Charge", shippingCharge],
+
+    ...(order.couponCode
+      ? [["Coupon", order.couponCode]]
+      : []),
+
+    ["Discount", discount],
+  ];
+
+  let totalRowY = totalsY + 13;
+
+  totalRows.forEach(([label, amount]) => {
+    doc
+      .font("Helvetica")
+      .fontSize(8.5)
+      .fillColor(COLORS.text)
+      .text(
+        label,
+        totalsX + 18,
+        totalRowY,
+        {
+          width: 100,
+        }
+      );
+
+    doc
+      .font("Helvetica")
+      .fontSize(8.5)
+      .fillColor(COLORS.text)
+      .text(
+        label === "Discount" && amount > 0
+          ? `- ${formatCurrency(amount)}`
+          : formatCurrency(amount),
+        totalsX + 120,
+        totalRowY,
+        {
+          width: 80,
+          align: "right",
+        }
+      );
+
+    totalRowY += 22;
+  });
+
+  doc
+    .rect(
+      totalsX,
+      totalsY + 100,
+      totalsWidth,
+      42
+    )
+    .fillAndStroke(
+      COLORS.softCream,
+      COLORS.border
+    );
+
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(10)
+    .fillColor(COLORS.cocoaDark)
+    .text(
+      "TOTAL AMOUNT (INR)",
+      totalsX + 18,
+      totalsY + 114,
+      {
+        width: 125,
+      }
+    );
+
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(13)
+    .fillColor(COLORS.gold)
+    .text(
+      formatCurrency(finalAmount),
+      totalsX + 138,
+      totalsY + 111,
+      {
+        width: 64,
+        align: "right",
+      }
+    );
+
+  /*
+   * Thank-you section
+   */
+  doc
+    .font("Times-Bold")
+    .fontSize(11)
+    .fillColor(COLORS.cocoa)
+    .text(
+      "Thank you for shopping with Sharanee.",
+      55,
+      totalsY + 78,
+      {
+        width: 250,
+      }
+    );
+
+  doc
+    .font("Helvetica")
+    .fontSize(8)
+    .fillColor(COLORS.muted)
+    .text(
+      "We truly appreciate your trust and support.",
+      55,
+      totalsY + 98,
+      {
+        width: 250,
+      }
+    );
+
+  if (order.couponCode) {
+    doc
+      .font("Helvetica")
+      .fontSize(7.5)
+      .fillColor(COLORS.muted)
+      .text(
+        `Coupon applied: ${order.couponCode}`,
+        55,
+        totalsY + 118,
+        {
+          width: 250,
+        }
+      );
+  }
+
+  /*
+   * Footer on every generated page
+   */
+  const pageRange = doc.bufferedPageRange();
+
+  for (
+    let pageIndex = pageRange.start;
+    pageIndex <
+    pageRange.start + pageRange.count;
+    pageIndex += 1
+  ) {
+    doc.switchToPage(pageIndex);
+    drawFooter(doc);
+  }
+
+  doc.end();
+}
+);
+
 module.exports = {
   downloadInvoice,
+  downloadGuestInvoice,
 };

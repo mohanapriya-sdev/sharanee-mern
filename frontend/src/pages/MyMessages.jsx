@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { contactApi } from "../api/endpoints";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+
 import "../styles/MyMessages.css";
 export default function MyMessages() {
     const toast = useToast();
+    const { user } = useAuth();
 
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -16,13 +18,20 @@ export default function MyMessages() {
 
             const guestMobile = localStorage.getItem("guestMobile");
 
-            const response = user
-                ? await contactApi.myMessages()
-                : await contactApi.guestMessages(guestMobile);
+            let response;
+
+            if (user) {
+                response = await contactApi.myMessages();
+            } else if (guestMobile) {
+                response = await contactApi.guestMessages(guestMobile);
+            } else {
+                setMessages([]);
+                return;
+            }
 
             setMessages(response.data.contacts || []);
 
-            setMessages(response.data.contacts || []);
+
         } catch (error) {
             console.error("Load my messages error:", error);
 

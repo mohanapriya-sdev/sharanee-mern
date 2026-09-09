@@ -2,6 +2,7 @@ const express = require("express");
 
 const {
   downloadInvoice,
+  downloadGuestInvoice,
 } = require("../controllers/invoiceController");
 
 const {
@@ -10,13 +11,10 @@ const {
 
 const router = express.Router();
 
-// Download invoice PDF
-// Route: GET /api/invoice/:orderId
-// Access: Authenticated User / Admin
-router.get(
-  "/:orderId",
-  protect,
-  downloadInvoice
-);
+// Customer/Admin
+router.get("/:orderId", protect, downloadInvoice);
+
+// Guest
+router.post("/guest/:orderId", downloadGuestInvoice);
 
 module.exports = router;
