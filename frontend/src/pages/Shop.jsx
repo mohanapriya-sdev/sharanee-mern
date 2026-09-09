@@ -7,7 +7,7 @@ import FilterDropdown from "../components/FilterDropdown";
 import { Icon } from "../components/Icons";
 import ShopHero from "../components/ShopHero";
 
-
+{/*
 // Fallback imagery for category circles when a category has no image yet.
 const CIRCLE_FALLBACK = [
   "https://ps-vastra.myshopify.com/cdn/shop/collections/Saree_f21a0b8d-af7e-4925-aa0c-6795f26f90d3.webp?crop=center&height=169&v=1775470531&width=169",
@@ -18,7 +18,7 @@ const CIRCLE_FALLBACK = [
   "https://ps-vastra.myshopify.com/cdn/shop/files/Gemini_Generated_Image_exdwmlexdwmlexdw.png?crop=center&height=169&v=1772428583&width=169",
   "https://images.unsplash.com/photo-1610189844537-f6a3d538e0f6?auto=format&fit=crop&w=300&q=80",
 ];
-
+*/}
 const PRICE_RANGES = [
   { value: "0-2000", label: "Under Rs. 2,000" },
   { value: "2000-5000", label: "Rs. 2,000 – 5,000" },
