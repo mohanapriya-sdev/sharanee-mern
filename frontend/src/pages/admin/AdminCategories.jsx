@@ -361,57 +361,55 @@ export default function AdminCategories() {
             {currentCategories.length === 0 && <tr><td colSpan="4" style={{ color: "var(--muted)" }}>No categories yet.</td></tr>}
           </tbody>
         </table>
-
-
-        <div className="pagination">
-
-          <button
-            className="page-nav"
-            disabled={currentPage === 1}
-            onClick={() =>
-              setCurrentPage((prev) => Math.max(prev - 1, 1))
-            }
-          >
-            &lt;
-          </button>
-
-          {Array.from(
-            { length: totalPages },
-            (_, i) => (
-              <button
-                key={i}
-                className={
-                  currentPage === i + 1
-                    ?
-                    "active-page"
-                    :
-                    ""
-                }
-                onClick={() =>
-                  setCurrentPage(i + 1)
-                }
-              >
-
-                {i + 1}
-
-              </button>
-            )
-          )}
-
-          <button
-            className="page-nav"
-            disabled={currentPage === totalPages}
-            onClick={() =>
-              setCurrentPage((prev) =>
-                Math.min(prev + 1, totalPages)
-              )
-            }
-          >
-            &gt;
-          </button>
-
-        </div>
       </div >
+      <div className="pagination">
+
+        <button
+          className="page-nav"
+          disabled={currentPage === 1}
+          onClick={() =>
+            setCurrentPage((prev) => Math.max(prev - 1, 1))
+          }
+        >
+          &lt;
+        </button>
+
+        {Array.from(
+          { length: totalPages },
+          (_, i) => (
+            <button
+              key={i}
+              className={
+                currentPage === i + 1
+                  ?
+                  "active-page"
+                  :
+                  ""
+              }
+              onClick={() =>
+                setCurrentPage(i + 1)
+              }
+            >
+
+              {i + 1}
+
+            </button>
+          )
+        )}
+
+        <button
+          className="page-nav"
+          disabled={currentPage === totalPages}
+          onClick={() =>
+            setCurrentPage((prev) =>
+              Math.min(prev + 1, totalPages)
+            )
+          }
+        >
+          &gt;
+        </button>
+
+      </div>
     </>
   );
 }
