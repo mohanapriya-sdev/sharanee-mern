@@ -13,8 +13,8 @@ const { protect, admin } = require("../middleware/auth");
 
 router.post("/", protect, admin, createCoupon);
 router.get("/", protect, admin, listCoupons);
-router.get("/active", protect, getActiveCoupons);
-router.post("/apply", protect, applyCoupon);
+router.get("/active", getActiveCoupons);
+router.post("/apply", applyCoupon);
 router.put(
   "/toggle/:id",
   protect,

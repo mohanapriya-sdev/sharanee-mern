@@ -29,7 +29,7 @@ const run = async () => {
   }
 
   // --- Categories ---
- // const categoryNames = ["Silk Sarees", "Cotton Sarees", "Wedding Collection", "Festive Wear"];
+ const categoryNames = ["Silk Sarees", "Cotton Sarees", "Wedding Collection", "Festive Wear"];
   const categories = {};
   for (const name of categoryNames) {
     let cat = await Category.findOne({ categoryName: name });

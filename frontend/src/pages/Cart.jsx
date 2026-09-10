@@ -26,7 +26,7 @@ export default function Cart() {
   useEffect(() => {
     clearCartBadge();
   }, [clearCartBadge]);
-  
+
   useEffect(() => {
     const fetchCoupons = async () => {
       try {
@@ -163,14 +163,45 @@ export default function Cart() {
                       </td>
                       <td>
                         <div className="qty">
-                          <button onClick={() => updateQty(user ? item._id : item.product._id, Math.max(1, item.quantity - 1))}>-</button>
+                          <button
+                            onClick={() =>
+                              updateQty(
+                                user ? item._id : item.product._id,
+                                Math.max(1, item.quantity - 1),
+                                item.selectedColor,
+                                item.selectedSize
+                              )
+                            }
+                          >-</button>
                           <span>{item.quantity}</span>
-                          <button onClick={() => updateQty(user ? item._id : item.product._id, item.quantity + 1)}>+</button>
+                          <button
+                            onClick={() =>
+                              updateQty(
+                                user ? item._id : item.product._id,
+                                item.quantity + 1,
+                                item.selectedColor,
+                                item.selectedSize
+                              )
+                            }
+                          >+</button>
                         </div>
                       </td>
                       <td className="price">Rs. {(priceOf(p) * item.quantity).toLocaleString("en-IN")}</td>
                       <td>
-                        <button onClick={() => removeFromCart(user ? item._id : item.product._id)} style={{ background: "none", border: "none", color: "var(--danger)" }}>
+                        <button
+                          onClick={() =>
+                            removeFromCart(
+                              user ? item._id : item.product._id,
+                              item.selectedColor,
+                              item.selectedSize
+                            )
+                          }
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "var(--danger)",
+                          }}
+                        >
                           <Icon.Trash />
                         </button>
                       </td>

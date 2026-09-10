@@ -26,8 +26,6 @@ const protect = async (req, res, next) => {
   }
 };
 
-
-
 // Optional authentication
 // If token exists and is valid -> attaches req.user
 // If no token -> continues as guest

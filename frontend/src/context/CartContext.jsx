@@ -84,15 +84,63 @@ export function CartProvider({ children }) {
     setCartBadge((prev) => prev + qty);
   };
 
+  const updateQty = async (
+    id,
+    qty,
+    selectedColor = null,
+    selectedSize = null
+  ) => {
+    if (user) {
+      await cartApi.updateQty(id, qty);
+      await refreshCart();
+      return;
+    }
 
-  const updateQty = async (id, qty) => {
-    await cartApi.updateQty(id, qty);
-    await refreshCart();
+    const guestCart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+
+    const updated = guestCart.map((item) => {
+      if (
+        item.product._id === id &&
+        item.selectedColor === selectedColor &&
+        item.selectedSize === selectedSize
+      ) {
+        return {
+          ...item,
+          quantity: qty,
+        };
+      }
+
+      return item;
+    });
+
+    localStorage.setItem("guestCart", JSON.stringify(updated));
+    setCart(updated);
   };
-  const removeFromCart = async (id) => {
-    await cartApi.remove(id);
-    await refreshCart();
 
+  const removeFromCart = async (
+    id,
+    selectedColor = null,
+    selectedSize = null
+  ) => {
+    if (user) {
+      await cartApi.remove(id);
+      await refreshCart();
+      return;
+    }
+
+    const guestCart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+
+    const updated = guestCart.filter(
+      (item) =>
+        !(
+          item.product._id === id &&
+          item.selectedColor === selectedColor &&
+          item.selectedSize === selectedSize
+        )
+    );
+
+    localStorage.setItem("guestCart", JSON.stringify(updated));
+    setCart(updated);
   };
 
   const addToWishlist = async (
